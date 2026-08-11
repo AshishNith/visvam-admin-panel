@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Athena";
+  src: url("/fonts/Athena-Regular.ttf") format("truetype"),
+       url("./assets/fonts/Athena-Regular.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Tenor Sans";
+  src: url("/fonts/TenorSans-Regular.ttf") format("truetype"),
+       url("./assets/fonts/TenorSans-Regular.ttf") format("truetype");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --background: #fdfaf5;
+  --foreground: #241a12;
+  --ink: #241a12;
+  --cream: #f8f1e7;
+  --sand: #eee0cd;
+  --clay: #8a4f27;
+  --ember: #c8712f;
+  --muted: #f5efe6;
+  --muted-foreground: #6d5c4c;
+  --border: rgba(36, 26, 18, 0.12);
+}
+
+@layer base {
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: "Tenor Sans", "Inter", system-ui, sans-serif;
+    font-weight: 400;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  h1, h2, h3, h4, .font-display {
+    font-family: "Athena", "Cormorant Garamond", "EB Garamond", "Playfair Display", serif;
+    font-weight: 400;
+  }
+  ::selection {
+    background: var(--sand);
+    color: var(--ink);
+  }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(138, 79, 39, 0.35);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(138, 79, 39, 0.75);
+}
+
+.luxury-card {
+  background: #ffffff;
+  border: 1px solid rgba(36, 26, 18, 0.1);
+  box-shadow: 0 2px 10px rgba(36, 26, 18, 0.03);
+}
+
+.luxury-card-cream {
+  background: #f8f1e7;
+  border: 1px solid rgba(36, 26, 18, 0.1);
+}
+
+.tracked {
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
