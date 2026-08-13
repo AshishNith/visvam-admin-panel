@@ -50,6 +50,9 @@
     background: var(--sand);
     color: var(--ink);
   }
+  .italic, i, em {
+    font-style: normal !important;
+  }
 }
 
 /* Custom Scrollbar */
@@ -72,11 +75,15 @@
   background: #ffffff;
   border: 1px solid rgba(36, 26, 18, 0.1);
   box-shadow: 0 2px 10px rgba(36, 26, 18, 0.03);
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .luxury-card-cream {
   background: #f8f1e7;
   border: 1px solid rgba(36, 26, 18, 0.1);
+  border-radius: 16px;
+  overflow: hidden;
 }
 
 .tracked {
