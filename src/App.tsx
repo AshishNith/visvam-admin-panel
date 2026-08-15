@@ -11,6 +11,8 @@ import InquiriesPage from "./pages/InquiriesPage";
 import SubscribersPage from "./pages/SubscribersPage";
 import EmployeesPage from "./pages/EmployeesPage";
 import UsersPage from "./pages/UsersPage";
+import ReportsPage from "./pages/ReportsPage";
+import SettingsPage from "./pages/SettingsPage";
 
 import {
   getAdminToken,
@@ -170,6 +172,16 @@ export default function App() {
             }
           />
           <Route path="users" element={<UsersPage />} />
+          <Route
+            path="reports"
+            element={
+              <ReportsPage
+                products={products}
+                orders={orders}
+              />
+            }
+          />
+          <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
