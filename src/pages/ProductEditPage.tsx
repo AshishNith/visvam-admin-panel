@@ -278,7 +278,7 @@ export default function ProductEditPage({ products, onRefresh }: ProductEditPage
                 onChange={(e) => setProductForm({ ...productForm, category: e.target.value as any })}
                 className="w-full px-3 py-2 bg-[#faf7f2] border border-[#241a12]/15 rounded text-xs outline-none focus:border-[#8a4f27] font-mono text-[#241a12]"
               >
-                <option value="nuts">Nuts & Kernels</option>
+                <option value="nuts">Nuts & Dried Fruits</option>
                 <option value="gourmet">Gourmet Selection</option>
                 <option value="gifting">Gifting & Hampers</option>
               </select>

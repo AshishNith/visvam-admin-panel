@@ -163,8 +163,13 @@ function SalesReport({ orders, products, range, allOrders }: { orders: Order[]; 
         map[cat] = (map[cat] || 0) + item.price * item.qty;
       }
     }
+    const catLabels: Record<string, string> = {
+      nuts: "Nuts & Dried Fruits",
+      gourmet: "Gourmet Selection",
+      gifting: "Gifting & Hampers",
+    };
     return Object.entries(map)
-      .map(([name, value]) => ({ name: name.charAt(0).toUpperCase() + name.slice(1), value: Math.round(value), color: CATEGORY_COLORS[name] || "#999" }))
+      .map(([name, value]) => ({ name: catLabels[name] || name.charAt(0).toUpperCase() + name.slice(1), value: Math.round(value), color: CATEGORY_COLORS[name] || "#999" }))
       .sort((a, b) => b.value - a.value);
   }, [orders, products]);
 

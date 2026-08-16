@@ -65,7 +65,7 @@ export default function ProductsPage({ products, onRefresh }: ProductsPageProps)
             className="py-2 px-2.5 text-xs bg-white border border-[#241a12]/15 rounded outline-none focus:border-[#8a4f27] font-mono"
           >
             <option value="all">All Categories</option>
-            <option value="nuts">Nuts</option>
+            <option value="nuts">Nuts & Dried Fruits</option>
             <option value="gourmet">Gourmet</option>
             <option value="gifting">Gifting</option>
           </select>

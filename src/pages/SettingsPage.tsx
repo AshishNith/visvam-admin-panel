@@ -59,7 +59,7 @@ const DEFAULT_SETTINGS: StoreSettings = {
   pickupLanes: "Riverside Lane\nOrchard Gate\nHeritage Lounge",
   pickupSlots: "ASAP\n10:00 AM - 12:00 PM\n2:00 PM - 4:00 PM\n5:00 PM - 7:00 PM",
 
-  categories: "nuts: Nuts & Kernels\ngourmet: Gourmet Selection\ngifting: Gifting & Hampers",
+  categories: "nuts: Nuts & Dried Fruits\ngourmet: Gourmet Selection\ngifting: Gifting & Hampers",
   badges: "SUPERFOOD\nLUXURY EDITION\nBEST SELLER\nNEW ARRIVAL\nLIMITED HARVEST\nORGANIC",
 
   roles: "Admin: Full access to all features\nStore Manager: Products, Orders, Reports\nDispatch Staff: Orders only (view & status)\nRead-Only: Dashboard & Reports view",
