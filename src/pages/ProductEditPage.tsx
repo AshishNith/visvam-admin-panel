@@ -42,8 +42,6 @@ export default function ProductEditPage({ products, onRefresh }: ProductEditPage
     images: ["https://res.cloudinary.com/dvwpxb2oa/image/upload/f_auto,q_auto/visvam_harvest/01_Almonds_Badam/DSC00414.jpg"],
     description: "",
     serving: "500g Pouch",
-    origin: "California, USA",
-    grade: "Grade A1",
     benefits: ["Rich in Vitamin E", "100% Organic"],
     bestseller: true,
     isNew: false,
@@ -343,26 +341,6 @@ export default function ProductEditPage({ products, onRefresh }: ProductEditPage
                 type="text"
                 value={productForm.serving || "500g Pouch"}
                 onChange={(e) => setProductForm({ ...productForm, serving: e.target.value })}
-                className="w-full px-3 py-2 bg-[#faf7f2] border border-[#241a12]/15 rounded text-xs outline-none focus:border-[#8a4f27] text-[#241a12]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[#6d5c4c] text-xs font-mono uppercase mb-1">Origin Location</label>
-              <input
-                type="text"
-                value={productForm.origin || "California, USA"}
-                onChange={(e) => setProductForm({ ...productForm, origin: e.target.value })}
-                className="w-full px-3 py-2 bg-[#faf7f2] border border-[#241a12]/15 rounded text-xs outline-none focus:border-[#8a4f27] text-[#241a12]"
-              />
-            </div>
-
-            <div>
-              <label className="block text-[#6d5c4c] text-xs font-mono uppercase mb-1">Quality Grade</label>
-              <input
-                type="text"
-                value={productForm.grade || "Grade A1"}
-                onChange={(e) => setProductForm({ ...productForm, grade: e.target.value })}
                 className="w-full px-3 py-2 bg-[#faf7f2] border border-[#241a12]/15 rounded text-xs outline-none focus:border-[#8a4f27] text-[#241a12]"
               />
             </div>

@@ -34,8 +34,6 @@ export interface Product {
   images: string[];
   description: string;
   serving: string;
-  origin: string;
-  grade?: string;
   benefits?: string[];
   bestseller?: boolean;
   isNew?: boolean;
