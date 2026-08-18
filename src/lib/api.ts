@@ -50,6 +50,20 @@ export interface OrderItem {
   image: string;
 }
 
+export interface ShiprocketDetails {
+  orderId?: number;
+  shipmentId?: number;
+  awbCode?: string;
+  courierName?: string;
+  courierId?: number;
+  labelUrl?: string;
+  manifestUrl?: string;
+  invoiceUrl?: string;
+  trackingUrl?: string;
+  status?: string;
+  lastTrackedAt?: string;
+}
+
 export interface Order {
   _id: string;
   guestEmail?: string;
@@ -57,6 +71,16 @@ export interface Order {
   orderItems: OrderItem[];
   pickupLane?: string;
   pickupSlot?: string;
+  shippingAddress?: {
+    fullName?: string;
+    address?: string;
+    city?: string;
+    state?: string;
+    postalCode?: string;
+    phone?: string;
+    email?: string;
+    country?: string;
+  };
   paymentMethod: string;
   itemsPrice: number;
   taxPrice: number;
@@ -65,6 +89,7 @@ export interface Order {
   isPaid: boolean;
   paidAt?: string;
   status: "Pending" | "Processing" | "Shipped" | "Completed" | "Cancelled";
+  shiprocket?: ShiprocketDetails;
   createdAt: string;
 }
 
@@ -520,5 +545,78 @@ export async function deleteUser(id: string): Promise<{ success: boolean; messag
     return { success: false, message: err.message };
   }
 }
+
+// ── Shiprocket Logistics & Courier APIs ───────────────────────────
+export async function createShiprocketShipment(orderId: string): Promise<{
+  success: boolean;
+  message?: string;
+  data?: {
+    orderId: string;
+    status: string;
+    shiprocket: ShiprocketDetails;
+  };
+}> {
+  try {
+    const res = await fetch(`${API_BASE}/shipping/orders/${orderId}/ship`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, message: err.message || "Failed to push shipment to Shiprocket" };
+  }
+}
+
+export async function getShiprocketLabel(orderId: string): Promise<{ success: boolean; labelUrl?: string; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/shipping/orders/${orderId}/label`, {
+      headers: getAuthHeaders(),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, message: err.message || "Failed to retrieve shipping label" };
+  }
+}
+
+export async function trackOrderShipment(awbOrOrderId: string): Promise<{
+  success: boolean;
+  awbCode?: string;
+  currentStatus?: string;
+  currentLocation?: string;
+  etd?: string;
+  courier?: string;
+  timeline?: Array<{ date: string; activity: string; location: string; completed?: boolean }>;
+  message?: string;
+}> {
+  try {
+    const res = await fetch(`${API_BASE}/shipping/track/${awbOrOrderId}`);
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, message: err.message || "Failed to fetch live shipment tracking" };
+  }
+}
+
+export async function checkPincodeServiceability(pincode: string, weightKg: number = 0.5): Promise<{
+  success: boolean;
+  isServiceable?: boolean;
+  estimatedDays?: number;
+  etd?: string;
+  courierName?: string;
+  courierRate?: number;
+  availableCouriers?: Array<{ id: number; name: string; rate: number; etd: string; estimatedDays: number }>;
+  message?: string;
+}> {
+  try {
+    const res = await fetch(`${API_BASE}/shipping/check-serviceability`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ pincode, weightKg }),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, message: err.message || "Failed to check PIN code serviceability" };
+  }
+}
+
 
 
