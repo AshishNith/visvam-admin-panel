@@ -115,7 +115,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
       <style>body{font-family:monospace;font-size:12px;padding:20px}h2{margin:0 0 10px}table{width:100%;border-collapse:collapse}td,th{border:1px solid #ccc;padding:6px;text-align:left}th{background:#f5f5f5}</style>
       </head>
       <body>
-        <h2>Viśvam Harvest — Packing Slip</h2>
+        <h2>Viśvam — Packing Slip</h2>
         <p><strong>Order:</strong> #${order._id.substring(0, 12)}</p>
         <p><strong>Customer:</strong> ${order.guestEmail || order.user?.email || "Guest"}</p>
         <p><strong>Date:</strong> ${new Date(order.createdAt).toLocaleDateString("en-IN")}</p>

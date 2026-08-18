@@ -38,8 +38,8 @@ interface StoreSettings {
 }
 
 const DEFAULT_SETTINGS: StoreSettings = {
-  storeName: "Viśvam Harvest",
-  legalName: "Visvam Harvest Private Limited",
+  storeName: "Viśvam",
+  legalName: "Visvam Private Limited",
   address: "The Orchard Estate, Riverside Lane",
   city: "Dehradun",
   state: "Uttarakhand",

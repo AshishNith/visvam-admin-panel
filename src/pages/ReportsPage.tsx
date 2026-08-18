@@ -425,7 +425,7 @@ function CustomerReport({ orders, range }: { orders: Order[]; range: DateRange }
                     <td className="py-2 px-3 text-[#6d5c4c] font-mono text-[10px]">{c.lastOrder.toLocaleDateString("en-IN", { day: "2-digit", month: "short" })}</td>
                     <td className="py-2 px-3">
                       <a
-                        href={`https://wa.me/?text=${encodeURIComponent(`Hi! Thank you for your order at Viśvam Harvest. We have exciting new arrivals!`)}`}
+                        href={`https://wa.me/?text=${encodeURIComponent(`Hi! Thank you for your order at Viśvam. We have exciting new arrivals!`)}`}
                         target="_blank"
                         rel="noreferrer"
                         className="text-[10px] text-emerald-600 hover:underline font-semibold"
