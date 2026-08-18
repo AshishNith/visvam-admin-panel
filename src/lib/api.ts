@@ -338,7 +338,7 @@ const INITIAL_MEMORIES: ClientMemoryNote[] = [
   {
     id: "mem-1",
     clientName: "Madhavendra Mishra",
-    email: "madhav@visvamharvest.com",
+    email: "madhav@visvam.in",
     category: "Co-Founder",
     notes: "Recently onboarded co-founder leading global sourcing and supply chain strategy.",
     needsUpdate: false,
@@ -412,7 +412,7 @@ const INITIAL_EMPLOYEES: Employee[] = [
   {
     id: "emp-1",
     name: "Madhavendra Mishra",
-    email: "madhav@visvamharvest.com",
+    email: "madhav@visvam.in",
     phone: "+91 98765 43210",
     role: "Co-Founder & Head of Sourcing",
     department: "Management",
@@ -422,7 +422,7 @@ const INITIAL_EMPLOYEES: Employee[] = [
   {
     id: "emp-2",
     name: "Ranjan Ashish",
-    email: "admin@visvam.com",
+    email: "admin@visvam.in",
     phone: "+91 99920 12345",
     role: "System Administrator",
     department: "Operations",
@@ -432,7 +432,7 @@ const INITIAL_EMPLOYEES: Employee[] = [
   {
     id: "emp-3",
     name: "Ananya Sharma",
-    email: "ananya.s@visvamharvest.com",
+    email: "ananya.s@visvam.in",
     phone: "+91 98123 56789",
     role: "Customer Support Specialist",
     department: "Support",
@@ -442,7 +442,7 @@ const INITIAL_EMPLOYEES: Employee[] = [
   {
     id: "emp-4",
     name: "Vikramaditya Rao",
-    email: "vikram@visvamharvest.com",
+    email: "vikram@visvam.in",
     phone: "+91 97654 32109",
     role: "Cold-Chain Logistics Lead",
     department: "Logistics",

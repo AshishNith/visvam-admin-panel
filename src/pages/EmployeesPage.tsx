@@ -213,7 +213,7 @@ export default function EmployeesPage({ employees, onRefresh }: EmployeesPagePro
                   required
                   value={form.email || ""}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  placeholder="e.g. madhav@visvamharvest.com"
+                  placeholder="e.g. madhav@visvam.in"
                   className="w-full px-3 py-2 bg-white border border-[#241a12]/15 rounded outline-none focus:border-[#8a4f27]"
                 />
               </div>

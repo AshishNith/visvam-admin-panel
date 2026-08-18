@@ -109,7 +109,7 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
       {/* Items Table */}
       <div className="bg-white p-5 rounded border border-[#241a12]/10 space-y-3">
         <h3 className="font-mono text-xs text-[#8a4f27] uppercase font-semibold">
-          Ordered Harvest Items ({order.orderItems?.length || 0})
+          Ordered Items ({order.orderItems?.length || 0})
         </h3>
         <div className="border border-[#241a12]/10 rounded overflow-hidden">
           <table className="w-full text-left text-xs">

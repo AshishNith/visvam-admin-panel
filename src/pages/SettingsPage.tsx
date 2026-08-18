@@ -47,7 +47,7 @@ const DEFAULT_SETTINGS: StoreSettings = {
   fssaiNumber: "",
   gstin: "",
   phone: "+91 98765 43210",
-  email: "hello@visvamharvest.com",
+  email: "care@visvam.in",
 
   taxRate: 5,
   freeShippingThreshold: 1500,
@@ -60,7 +60,7 @@ const DEFAULT_SETTINGS: StoreSettings = {
   pickupSlots: "ASAP\n10:00 AM - 12:00 PM\n2:00 PM - 4:00 PM\n5:00 PM - 7:00 PM",
 
   categories: "nuts: Nuts & Dried Fruits\ngourmet: Gourmet Selection\ngifting: Gifting & Hampers",
-  badges: "SUPERFOOD\nLUXURY EDITION\nBEST SELLER\nNEW ARRIVAL\nLIMITED HARVEST\nORGANIC",
+  badges: "SUPERFOOD\nLUXURY EDITION\nBEST SELLER\nNEW ARRIVAL\nLIMITED EDITION\nORGANIC",
 
   roles: "Admin: Full access to all features\nStore Manager: Products, Orders, Reports\nDispatch Staff: Orders only (view & status)\nRead-Only: Dashboard & Reports view",
 };
