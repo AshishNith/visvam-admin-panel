@@ -108,7 +108,14 @@ export default function ProductsPage({ products, onRefresh }: ProductsPageProps)
                       className="size-10 object-cover rounded bg-[#faf7f2] shrink-0 border border-[#241a12]/10"
                     />
                     <div>
-                      <p className="font-medium text-[#241a12] hover:text-[#8a4f27] transition">{p.name}</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-medium text-[#241a12] hover:text-[#8a4f27] transition">{p.name}</p>
+                        {p.hasVariants && p.variants && p.variants.length > 0 && (
+                          <span className="text-[9px] font-mono px-1.5 py-0.2 bg-[#8a4f27]/10 text-[#8a4f27] rounded font-semibold border border-[#8a4f27]/20">
+                            {p.variants.length} Variants
+                          </span>
+                        )}
+                      </div>
                       <p className="text-[10px] text-[#6d5c4c] font-mono">{p.slug}</p>
                     </div>
                   </td>

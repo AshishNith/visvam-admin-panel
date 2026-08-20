@@ -23,6 +23,23 @@ function getAuthHeaders(): Record<string, string> {
   return headers;
 }
 
+export interface IVariantAttribute {
+  name: string;
+  values: string[];
+}
+
+export interface IProductVariant {
+  _id?: string;
+  sku?: string;
+  title: string;
+  options: Record<string, string>;
+  price: number;
+  mrp?: number;
+  stock: number;
+  image?: string;
+  isDefault?: boolean;
+}
+
 export interface Product {
   _id?: string;
   slug: string;
@@ -39,6 +56,9 @@ export interface Product {
   isNew?: boolean;
   isNewProduct?: boolean;
   stock?: number;
+  hasVariants?: boolean;
+  variantAttributes?: IVariantAttribute[];
+  variants?: IProductVariant[];
 }
 
 export interface OrderItem {
@@ -48,6 +68,9 @@ export interface OrderItem {
   qty: number;
   price: number;
   image: string;
+  variantTitle?: string;
+  variantSku?: string;
+  selectedOptions?: Record<string, string>;
 }
 
 export interface ShiprocketDetails {
