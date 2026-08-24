@@ -264,6 +264,37 @@ export async function deleteProduct(id: string): Promise<{ success: boolean; mes
   }
 }
 
+// Merchandising API — named, ordered product picks that drive the storefront's
+// nav dropdowns and homepage bestsellers section. Adding a new curated spot
+// on the site later just means introducing a new slot key, no API change.
+export async function getMerchandising(): Promise<Record<string, Product[]>> {
+  try {
+    const res = await fetch(`${API_BASE}/merchandising`);
+    if (!res.ok) throw new Error("Failed to fetch merchandising slots");
+    const json = await res.json();
+    return json.data || {};
+  } catch (err) {
+    console.error("Merchandising fetch error:", err);
+    return {};
+  }
+}
+
+export async function updateMerchandisingSlot(
+  key: string,
+  productIds: string[]
+): Promise<{ success: boolean; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/merchandising/${key}`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ productIds }),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
+
 // Orders API
 export async function getOrders(): Promise<Order[]> {
   try {

@@ -10,8 +10,8 @@ interface LoginPageProps {
 }
 
 export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
-  const [email, setEmail] = useState("admin@visvam.com");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loggingIn, setLoggingIn] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -83,20 +83,6 @@ export default function LoginPage({ onLoginSuccess }: LoginPageProps) {
             <span>{loggingIn ? "Logging in..." : "Log In"}</span>
           </button>
         </form>
-
-        <div className="pt-3 border-t border-[#3b2a1e] text-center">
-          <button
-            type="button"
-            onClick={() => {
-              setEmail("admin@visvam.com");
-              setPassword("admin123");
-              toast.info("Demo credentials set.");
-            }}
-            className="text-[10px] font-mono text-[#a68c78] hover:text-white underline cursor-pointer"
-          >
-            Fill Demo Credentials (admin@visvam.com)
-          </button>
-        </div>
       </div>
     </div>
   );

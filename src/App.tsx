@@ -5,6 +5,7 @@ import LoginPage from "./pages/LoginPage";
 import DashboardPage from "./pages/DashboardPage";
 import ProductsPage from "./pages/ProductsPage";
 import ProductEditPage from "./pages/ProductEditPage";
+import MerchandisingPage from "./pages/MerchandisingPage";
 import OrdersPage from "./pages/OrdersPage";
 import OrderDetailPage from "./pages/OrderDetailPage";
 import InquiriesPage from "./pages/InquiriesPage";
@@ -125,6 +126,10 @@ export default function App() {
                 onRefresh={loadData}
               />
             }
+          />
+          <Route
+            path="merchandising"
+            element={<MerchandisingPage products={products} />}
           />
           <Route
             path="orders"

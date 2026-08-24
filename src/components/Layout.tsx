@@ -9,6 +9,7 @@ import {
   UserCheck,
   BarChart2,
   Settings,
+  LayoutTemplate,
   RotateCw,
   ExternalLink,
   LogOut,
@@ -47,6 +48,7 @@ export default function Layout({ onLogout, onRefreshData, loading }: LayoutProps
             {[
               { to: "/", label: "Dashboard", icon: LayoutGrid },
               { to: "/products", label: "Products", icon: Package },
+              { to: "/merchandising", label: "Merchandising", icon: LayoutTemplate },
               { to: "/orders", label: "Orders", icon: ShoppingBag },
               { to: "/users", label: "Users", icon: Users },
               { to: "/inquiries", label: "Inquiries", icon: Mail },
