@@ -23,6 +23,21 @@ function getAuthHeaders(): Record<string, string> {
   return headers;
 }
 
+// Admin-uploaded images are stored as raw, full-resolution Cloudinary URLs
+// (frequently 8000px+ / ~10MB). Rendering those originals as small thumbnails
+// is what made these lists crawl. Request a small derivative instead.
+export function thumbUrl(url?: string, width = 200): string {
+  if (!url || !url.includes("res.cloudinary.com")) return url || "";
+  const marker = "/image/upload/";
+  const at = url.indexOf(marker);
+  if (at === -1) return url;
+  const prefix = url.slice(0, at + marker.length);
+  const rest = url.slice(at + marker.length);
+  const firstSegment = rest.split("/")[0];
+  if (/(^|,)(f_|q_|w_|h_|c_|dpr_)/.test(firstSegment)) return url;
+  return `${prefix}f_auto,q_auto,w_${width},c_limit/${rest}`;
+}
+
 export interface IVariantAttribute {
   name: string;
   values: string[];

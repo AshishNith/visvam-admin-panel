@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Search, ArrowUp, ArrowDown, X, Save, Check, LayoutTemplate } from "lucide-react";
 import { toast } from "sonner";
-import { Product, getMerchandising, updateMerchandisingSlot } from "../lib/api";
+import { Product, getMerchandising, updateMerchandisingSlot, thumbUrl } from "../lib/api";
 
 // One entry here = one curated spot on the storefront. To add a new one
 // later (another dropdown, a homepage "New Arrivals" row, etc.), add an
@@ -207,7 +207,7 @@ function SlotCard({
             className="flex items-center gap-2.5 p-2 bg-[#faf7f2] border border-[#241a12]/10 rounded-lg"
           >
             <img
-              src={p.images?.[0]}
+              src={thumbUrl(p.images?.[0], 120)}
               alt={p.name}
               className="size-9 object-cover rounded bg-white shrink-0 border border-[#241a12]/10"
             />
@@ -273,7 +273,7 @@ function SlotCard({
                 className="w-full flex items-center gap-2.5 p-2 hover:bg-[#faf7f2] transition text-left"
               >
                 <img
-                  src={p.images?.[0]}
+                  src={thumbUrl(p.images?.[0], 120)}
                   alt={p.name}
                   className="size-8 object-cover rounded bg-[#faf7f2] shrink-0 border border-[#241a12]/10"
                 />

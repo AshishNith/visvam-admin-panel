@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Search, Plus, Edit, Trash2, AlertCircle } from "lucide-react";
-import { Product, updateProduct, deleteProduct } from "../lib/api";
+import { Product, updateProduct, deleteProduct, thumbUrl } from "../lib/api";
 import { toast } from "sonner";
 
 interface ProductsPageProps {
@@ -103,7 +103,7 @@ export default function ProductsPage({ products, onRefresh }: ProductsPageProps)
                 >
                   <td className="py-3 px-3 flex items-center gap-2.5">
                     <img
-                      src={p.images?.[0]}
+                      src={thumbUrl(p.images?.[0], 120)}
                       alt={p.name}
                       className="size-10 object-cover rounded bg-[#faf7f2] shrink-0 border border-[#241a12]/10"
                     />
