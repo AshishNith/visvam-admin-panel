@@ -74,6 +74,7 @@ export interface Product {
   hasVariants?: boolean;
   variantAttributes?: IVariantAttribute[];
   variants?: IProductVariant[];
+  relatedProducts?: Product[] | string[];
 }
 
 export interface OrderItem {

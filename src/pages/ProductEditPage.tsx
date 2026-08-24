@@ -11,6 +11,8 @@ import {
   Layers,
   Plus,
   Info,
+  Search,
+  X,
 } from "lucide-react";
 import {
   Product,
@@ -19,6 +21,7 @@ import {
   createProduct,
   updateProduct,
   uploadMultipleImagesToCloudinary,
+  thumbUrl,
 } from "../lib/api";
 import { toast } from "sonner";
 
@@ -60,14 +63,44 @@ export default function ProductEditPage({ products, onRefresh }: ProductEditPage
     variants: [],
   });
 
+  const [relatedQuery, setRelatedQuery] = useState("");
+
   useEffect(() => {
     if (!isNew && id) {
       const found = products.find((p) => p._id === id || p.slug === id);
       if (found) {
-        setProductForm(found);
+        // The product list endpoint returns relatedProducts as bare ObjectId
+        // strings (unpopulated); resolve them against the loaded product list
+        // so the picker can show name/image instead of a raw id.
+        const relatedIds = (found.relatedProducts || []).map((rp: any) =>
+          typeof rp === "string" ? rp : rp._id
+        );
+        const resolvedRelated = relatedIds
+          .map((rid: string) => products.find((p) => p._id === rid))
+          .filter((p): p is Product => Boolean(p));
+        setProductForm({ ...found, relatedProducts: resolvedRelated });
       }
     }
   }, [id, isNew, products]);
+
+  const addRelatedProduct = (p: Product) => {
+    setProductForm((prev) => {
+      const current = (prev.relatedProducts as Product[]) || [];
+      if (current.some((rp) => rp._id === p._id)) return prev;
+      if (current.length >= 3) return prev;
+      return { ...prev, relatedProducts: [...current, p] };
+    });
+    setRelatedQuery("");
+  };
+
+  const removeRelatedProduct = (productId: string) => {
+    setProductForm((prev) => ({
+      ...prev,
+      relatedProducts: ((prev.relatedProducts as Product[]) || []).filter(
+        (p) => p._id !== productId
+      ),
+    }));
+  };
 
   const generateSlug = (name: string) => {
     return name
@@ -458,6 +491,9 @@ export default function ProductEditPage({ products, onRefresh }: ProductEditPage
     const payload = {
       ...productForm,
       price: effectivePrice,
+      relatedProducts: ((productForm.relatedProducts as Product[]) || [])
+        .map((p) => p._id)
+        .filter((pid): pid is string => Boolean(pid)),
       images:
         productForm.images && productForm.images.length > 0
           ? productForm.images
@@ -1163,6 +1199,109 @@ export default function ProductEditPage({ products, onRefresh }: ProductEditPage
               ))}
             </div>
           )}
+        </div>
+
+        {/* Recommended Products Card */}
+        <div className="bg-white p-6 rounded border border-[#241a12]/10 space-y-4">
+          <div className="flex justify-between items-center border-b border-[#241a12]/10 pb-2">
+            <div>
+              <h3 className="font-mono text-xs text-[#8a4f27] uppercase font-semibold">
+                5. Recommended Products
+              </h3>
+              <p className="text-[11px] text-[#6d5c4c] font-sans mt-0.5">
+                Pick up to 3 products to show below this one on its product page.
+              </p>
+            </div>
+            <span className="text-xs font-mono text-[#6d5c4c]">
+              {(productForm.relatedProducts as Product[] | undefined)?.length || 0} / 3
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            {((productForm.relatedProducts as Product[]) || []).length === 0 && (
+              <p className="text-[11px] text-[#6d5c4c]/70 italic py-1">
+                Nothing picked yet — no recommended section will show on this product's page.
+              </p>
+            )}
+            {((productForm.relatedProducts as Product[]) || []).map((p) => (
+              <div
+                key={p._id}
+                className="flex items-center gap-2.5 p-2 bg-[#faf7f2] border border-[#241a12]/10 rounded"
+              >
+                <img
+                  src={thumbUrl(p.images?.[0], 120)}
+                  alt={p.name}
+                  className="size-9 object-cover rounded bg-white shrink-0 border border-[#241a12]/10"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium truncate text-[#241a12]">{p.name}</p>
+                  <p className="text-[10px] text-[#6d5c4c] font-mono">₹{p.price?.toFixed?.(2) ?? p.price}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeRelatedProduct(p._id!)}
+                  className="p-1 rounded hover:bg-red-50 hover:text-red-600 transition shrink-0"
+                  title="Remove"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            ))}
+          </div>
+
+          <div className="relative">
+            <div className="relative">
+              <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#6d5c4c]" />
+              <input
+                type="text"
+                value={relatedQuery}
+                onChange={(e) => setRelatedQuery(e.target.value)}
+                disabled={((productForm.relatedProducts as Product[]) || []).length >= 3}
+                placeholder={
+                  ((productForm.relatedProducts as Product[]) || []).length >= 3
+                    ? "Maximum of 3 reached"
+                    : "Search products to recommend…"
+                }
+                className="w-full pl-7 pr-3 py-2 text-xs bg-[#faf7f2] border border-[#241a12]/15 rounded outline-none focus:border-[#8a4f27] disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+            </div>
+            {relatedQuery.trim().length > 0 && (
+              <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-white border border-[#241a12]/10 rounded shadow-lg overflow-hidden max-h-52 overflow-y-auto">
+                {products
+                  .filter((p) => p._id !== productForm._id)
+                  .filter(
+                    (p) =>
+                      !((productForm.relatedProducts as Product[]) || []).some(
+                        (rp) => rp._id === p._id
+                      )
+                  )
+                  .filter(
+                    (p) =>
+                      p.name.toLowerCase().includes(relatedQuery.toLowerCase()) ||
+                      p.slug.toLowerCase().includes(relatedQuery.toLowerCase())
+                  )
+                  .slice(0, 6)
+                  .map((p) => (
+                    <button
+                      key={p._id}
+                      type="button"
+                      onClick={() => addRelatedProduct(p)}
+                      className="w-full flex items-center gap-2.5 p-2 hover:bg-[#faf7f2] transition text-left"
+                    >
+                      <img
+                        src={thumbUrl(p.images?.[0], 120)}
+                        alt={p.name}
+                        className="size-8 object-cover rounded bg-[#faf7f2] shrink-0 border border-[#241a12]/10"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-medium truncate text-[#241a12]">{p.name}</p>
+                        <p className="text-[10px] text-[#6d5c4c] uppercase font-mono">{p.category}</p>
+                      </div>
+                    </button>
+                  ))}
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Feature Checkboxes */}
