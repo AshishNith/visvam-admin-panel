@@ -71,6 +71,7 @@ export default function InquiriesPage({ inquiries, onRefresh }: InquiriesPagePro
       </div>
 
       <div className="bg-white rounded border border-[#241a12]/10 overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
           <thead className="border-b border-[#241a12]/10 bg-[#faf7f2] font-mono uppercase text-[10px] text-[#6d5c4c]">
             <tr>
@@ -114,6 +115,7 @@ export default function InquiriesPage({ inquiries, onRefresh }: InquiriesPagePro
             ))}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );

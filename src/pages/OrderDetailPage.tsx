@@ -112,6 +112,7 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
           Ordered Items ({order.orderItems?.length || 0})
         </h3>
         <div className="border border-[#241a12]/10 rounded overflow-hidden">
+          <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
             <thead className="bg-[#faf7f2] text-[#6d5c4c] font-mono text-[10px] uppercase">
               <tr>
@@ -139,6 +140,7 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
               ))}
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 

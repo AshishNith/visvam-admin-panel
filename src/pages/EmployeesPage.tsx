@@ -119,6 +119,7 @@ export default function EmployeesPage({ employees, onRefresh }: EmployeesPagePro
       </div>
 
       <div className="bg-white rounded border border-[#241a12]/10 overflow-hidden">
+        <div className="overflow-x-auto">
         <table className="w-full text-left text-xs">
           <thead className="border-b border-[#241a12]/10 bg-[#faf7f2] font-mono uppercase text-[10px] text-[#6d5c4c]">
             <tr>
@@ -178,6 +179,7 @@ export default function EmployeesPage({ employees, onRefresh }: EmployeesPagePro
             ))}
           </tbody>
         </table>
+        </div>
       </div>
 
       {/* Add / Edit Employee Modal */}
