@@ -648,6 +648,36 @@ export default function ProductEditPage({ products, onRefresh }: ProductEditPage
                 className="w-full px-3 py-2 bg-[#faf7f2] border border-[#241a12]/15 rounded text-xs outline-none focus:border-[#8a4f27] text-[#241a12]"
               />
             </div>
+
+            {/* Packed weight drives the live Shiprocket delivery rate. Only used
+                when the product has no variants — variants carry their own. */}
+            <div>
+              <label className="block text-[#6d5c4c] text-xs font-mono uppercase mb-1">
+                Packed Weight (g)
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="10"
+                placeholder="auto — parsed from pack size"
+                value={
+                  productForm.weightKg != null && productForm.weightKg > 0
+                    ? Math.round(productForm.weightKg * 1000)
+                    : ""
+                }
+                onChange={(e) => {
+                  const grams = parseFloat(e.target.value);
+                  setProductForm({
+                    ...productForm,
+                    weightKg: Number.isFinite(grams) && grams > 0 ? grams / 1000 : undefined,
+                  });
+                }}
+                className="w-full px-3 py-2 bg-[#faf7f2] border border-[#241a12]/15 rounded text-xs outline-none focus:border-[#8a4f27] text-[#241a12]"
+              />
+              <p className="text-[10px] text-[#6d5c4c]/70 mt-1">
+                Gross weight of the packed pouch. Sets the Shiprocket delivery charge.
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -970,6 +1000,9 @@ export default function ProductEditPage({ products, onRefresh }: ProductEditPage
                           <th className="py-2.5 px-3 w-28">Price (₹) *</th>
                           <th className="py-2.5 px-3 w-28">MRP (₹)</th>
                           <th className="py-2.5 px-3 w-24">Stock Qty</th>
+                          <th className="py-2.5 px-3 w-28" title="Gross packed weight — used for Shiprocket delivery rates">
+                            Weight (g)
+                          </th>
                           <th className="py-2.5 px-3 w-12 text-center">Action</th>
                         </tr>
                       </thead>
@@ -1063,6 +1096,33 @@ export default function ProductEditPage({ products, onRefresh }: ProductEditPage
                                 onChange={(e) =>
                                   updateVariantRow(vIdx, "stock", parseInt(e.target.value) || 0)
                                 }
+                                className="w-full px-2 py-1 bg-[#faf7f2] border border-[#241a12]/15 focus:border-[#8a4f27] focus:bg-white rounded text-xs text-[#241a12] outline-none"
+                              />
+                            </td>
+
+                            {/* Packed weight — drives the Shiprocket rate. Stored
+                                in kg; entered in grams because that is how the
+                                packs are labelled. Blank falls back to parsing
+                                a number out of the variant title. */}
+                            <td className="py-2 px-3">
+                              <input
+                                type="number"
+                                min="0"
+                                step="10"
+                                placeholder="auto"
+                                value={
+                                  variant.weightKg != null && variant.weightKg > 0
+                                    ? Math.round(variant.weightKg * 1000)
+                                    : ""
+                                }
+                                onChange={(e) => {
+                                  const grams = parseFloat(e.target.value);
+                                  updateVariantRow(
+                                    vIdx,
+                                    "weightKg",
+                                    Number.isFinite(grams) && grams > 0 ? grams / 1000 : undefined
+                                  );
+                                }}
                                 className="w-full px-2 py-1 bg-[#faf7f2] border border-[#241a12]/15 focus:border-[#8a4f27] focus:bg-white rounded text-xs text-[#241a12] outline-none"
                               />
                             </td>

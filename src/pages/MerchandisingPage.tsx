@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
-import { Search, ArrowUp, ArrowDown, X, Save, Check, LayoutTemplate } from "lucide-react";
+import { Search, ArrowUp, ArrowDown, X, Save, Check, LayoutTemplate, Truck } from "lucide-react";
 import { toast } from "sonner";
-import { Product, getMerchandising, updateMerchandisingSlot, thumbUrl } from "../lib/api";
+import {
+  Product,
+  getMerchandising,
+  updateMerchandisingSlot,
+  getStoreSettings,
+  updateStoreSetting,
+  thumbUrl,
+} from "../lib/api";
 
 // One entry here = one curated spot on the storefront. To add a new one
 // later (another dropdown, a homepage "New Arrivals" row, etc.), add an
@@ -125,6 +132,8 @@ export default function MerchandisingPage({ products }: MerchandisingPageProps) 
         </p>
       </div>
 
+      <DeliveryChargesCard />
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         {SLOTS.map((slot) => (
           <SlotCard
@@ -141,6 +150,109 @@ export default function MerchandisingPage({ products }: MerchandisingPageProps) 
           />
         ))}
       </div>
+    </div>
+  );
+}
+
+/**
+ * Surcharge applied to Cash-on-Delivery orders only. Prepaid customers pay the
+ * live courier rate exactly; COD costs more to service, so it carries this fee.
+ * It is a separate line on the order, so it still applies when delivery itself
+ * is free. Editing it here affects every new order immediately.
+ */
+function DeliveryChargesCard() {
+  const [markup, setMarkup] = useState<string>("");
+  const [saved, setSaved] = useState<number | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    getStoreSettings().then((s) => {
+      setMarkup(String(s.codHandlingFee));
+      setSaved(s.codHandlingFee);
+      setLoading(false);
+    });
+  }, []);
+
+  const parsed = Math.round(Number(markup));
+  const valid = Number.isFinite(parsed) && parsed >= 0 && parsed <= 1000;
+  const dirty = valid && parsed !== saved;
+
+  const handleSave = async () => {
+    if (!dirty) return;
+    setSaving(true);
+    const res = await updateStoreSetting("codHandlingFee", parsed);
+    setSaving(false);
+    if (res.success) {
+      setSaved(parsed);
+      setMarkup(String(parsed));
+      toast.success("Saved — applies to new orders immediately.");
+    } else {
+      toast.error(res.message || "Failed to save");
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-xl border border-[#241a12]/10 shadow-2xs p-5">
+      <div className="flex flex-wrap items-end gap-x-8 gap-y-4">
+        <div className="flex items-start gap-2.5">
+          <Truck size={18} className="text-[#8a4f27] mt-0.5 shrink-0" />
+          <div>
+            <h3 className="text-sm font-semibold">Cash on Delivery — Handling Fee</h3>
+            <p className="text-[11px] text-[#6d5c4c] mt-0.5 max-w-md">
+              Charged on <strong>COD orders only</strong>. Online payments are charged the live
+              courier rate exactly, with nothing added. Shown as its own line at checkout, so it
+              still applies on free-delivery orders (above ₹3,499). Set to 0 to disable.
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <div className="space-y-1.5">
+            <label className="text-[11px] font-semibold text-[#6d5c4c] uppercase tracking-wider">
+              COD fee (₹)
+            </label>
+            <div className="flex items-center gap-1">
+              <span className="text-sm text-[#6d5c4c] font-mono">₹</span>
+              <input
+                type="number"
+                min={0}
+                max={1000}
+                value={loading ? "" : markup}
+                disabled={loading}
+                onChange={(e) => setMarkup(e.target.value)}
+                className="w-24 px-3 py-2 text-xs bg-[#faf7f2] border border-[#241a12]/10 rounded-lg outline-none focus:border-[#8a4f27] focus:ring-1 focus:ring-[#8a4f27]/20 transition disabled:opacity-50"
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={!dirty || saving || loading}
+            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs font-semibold transition-all self-end ${
+              !dirty
+                ? "bg-[#f4ece1] text-[#6d5c4c]/50 cursor-not-allowed"
+                : "bg-[#3a2012] hover:bg-[#8a4f27] text-white shadow-sm"
+            }`}
+          >
+            {saving ? (
+              "Saving…"
+            ) : dirty ? (
+              <>
+                <Save size={14} /> Save
+              </>
+            ) : (
+              <>
+                <Check size={14} /> Up to date
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+      {!valid && !loading && (
+        <p className="text-[10px] text-red-600 mt-2">Enter a whole number between 0 and 1000.</p>
+      )}
     </div>
   );
 }

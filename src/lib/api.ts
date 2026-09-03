@@ -53,6 +53,8 @@ export interface IProductVariant {
   stock: number;
   image?: string;
   isDefault?: boolean;
+  /** Gross packed weight in kg — drives the Shiprocket delivery rate. */
+  weightKg?: number;
 }
 
 export interface Product {
@@ -71,6 +73,8 @@ export interface Product {
   isNew?: boolean;
   isNewProduct?: boolean;
   stock?: number;
+  /** Gross packed weight in kg for products without variants. */
+  weightKg?: number;
   hasVariants?: boolean;
   variantAttributes?: IVariantAttribute[];
   variants?: IProductVariant[];
@@ -124,6 +128,8 @@ export interface Order {
   itemsPrice: number;
   taxPrice: number;
   shippingPrice: number;
+  /** Cash-on-Delivery surcharge. Zero for prepaid orders. */
+  codFee?: number;
   totalPrice: number;
   isPaid: boolean;
   paidAt?: string;
@@ -304,6 +310,41 @@ export async function updateMerchandisingSlot(
       method: "PUT",
       headers: getAuthHeaders(),
       body: JSON.stringify({ productIds }),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
+
+// Store Settings API (editable store-wide knobs)
+export interface StoreSettings {
+  /** Surcharge on Cash-on-Delivery orders. Prepaid orders pay nothing extra. */
+  codHandlingFee: number;
+}
+
+export async function getStoreSettings(): Promise<StoreSettings> {
+  const defaults: StoreSettings = { codHandlingFee: 10 };
+  try {
+    const res = await fetch(`${API_BASE}/settings`);
+    if (!res.ok) throw new Error("Failed to fetch store settings");
+    const json = await res.json();
+    return { ...defaults, ...(json.data || {}) };
+  } catch (err) {
+    console.error("Store settings fetch error:", err);
+    return defaults;
+  }
+}
+
+export async function updateStoreSetting(
+  key: keyof StoreSettings,
+  value: number
+): Promise<{ success: boolean; message?: string; data?: { key: string; value: number } }> {
+  try {
+    const res = await fetch(`${API_BASE}/settings/${key}`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ value }),
     });
     return await res.json();
   } catch (err: any) {
@@ -617,7 +658,48 @@ export async function deleteUser(id: string): Promise<{ success: boolean; messag
 }
 
 // ── Shiprocket Logistics & Courier APIs ───────────────────────────
-export async function createShiprocketShipment(orderId: string): Promise<{
+export interface CourierOption {
+  id: number;
+  name: string;
+  /** Total Shiprocket bills — freight PLUS COD and other charges. */
+  rate: number;
+  freightCharge?: number;
+  codCharges?: number;
+  isSurface?: boolean;
+  rating?: number;
+  etd: string;
+  estimatedDays: number | string;
+}
+
+/** Couriers that can service a placed order's destination PIN code. */
+export async function getShiprocketCouriers(orderId: string): Promise<{
+  success: boolean;
+  message?: string;
+  courierName?: string;
+  courierRate?: number;
+  etd?: string;
+  /** The courier the customer's delivery charge was quoted from (cheapest). */
+  quotedCourierId?: number;
+  /** Parcel weight the quote was based on. */
+  weightKg?: number;
+  /** Whether COD collection fees are bundled into these rates. */
+  isCod?: boolean;
+  availableCouriers?: CourierOption[];
+}> {
+  try {
+    const res = await fetch(`${API_BASE}/shipping/orders/${orderId}/couriers`, {
+      headers: getAuthHeaders(),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, message: err.message || "Failed to load couriers" };
+  }
+}
+
+export async function createShiprocketShipment(
+  orderId: string,
+  courierId?: number
+): Promise<{
   success: boolean;
   message?: string;
   data?: {
@@ -630,6 +712,7 @@ export async function createShiprocketShipment(orderId: string): Promise<{
     const res = await fetch(`${API_BASE}/shipping/orders/${orderId}/ship`, {
       method: "POST",
       headers: getAuthHeaders(),
+      body: JSON.stringify(courierId ? { courierId } : {}),
     });
     return await res.json();
   } catch (err: any) {

@@ -150,6 +150,7 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
           <p>Subtotal: ₹{order.itemsPrice?.toFixed(2)}</p>
           <p>Tax (5%): ₹{order.taxPrice?.toFixed(2)}</p>
           <p>Shipping: ₹{order.shippingPrice?.toFixed(2)}</p>
+          {Boolean(order.codFee) && <p>COD handling fee: ₹{order.codFee!.toFixed(2)}</p>}
         </div>
 
         <div className="text-right">

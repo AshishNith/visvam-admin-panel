@@ -25,8 +25,10 @@ import {
 } from "lucide-react";
 import {
   Order,
+  CourierOption,
   updateOrderStatus,
   createShiprocketShipment,
+  getShiprocketCouriers,
   getShiprocketLabel,
   trackOrderShipment,
 } from "../lib/api";
@@ -73,6 +75,21 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
   const [trackingModalOrder, setTrackingModalOrder] = useState<Order | null>(null);
   const [trackingData, setTrackingData] = useState<TrackingData | null>(null);
   const [trackingLoading, setTrackingLoading] = useState(false);
+
+  // Courier picker modal state
+  const [courierPickerOrder, setCourierPickerOrder] = useState<Order | null>(null);
+  const [courierOptions, setCourierOptions] = useState<CourierOption[]>([]);
+  const [courierLoading, setCourierLoading] = useState(false);
+  const [courierError, setCourierError] = useState<string | null>(null);
+  const [selectedCourier, setSelectedCourier] = useState<number | "auto">("auto");
+  // The courier the customer's delivery charge was quoted from — pre-selected
+  // so shipping the order costs what the customer was actually billed for.
+  const [quotedCourierId, setQuotedCourierId] = useState<number | null>(null);
+  const [courierWeightKg, setCourierWeightKg] = useState<number | null>(null);
+  const [courierIsCod, setCourierIsCod] = useState(false);
+  // Air couriers cost several times surface for dry goods and dominate the
+  // list visually. Hidden by default; the toggle reveals them.
+  const [surfaceOnly, setSurfaceOnly] = useState(true);
 
   /* ── Filtering ─────────────────────────────────────── */
   const filtered = useMemo(() => {
@@ -123,12 +140,13 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
   };
 
   /* ── Shiprocket Push / Dispatch ─────────────────────── */
-  const handleShipWithShiprocket = async (orderId: string) => {
+  const handleShipWithShiprocket = async (orderId: string, courierId?: number) => {
     setShippingOrderId(orderId);
     try {
-      const res = await createShiprocketShipment(orderId);
+      const res = await createShiprocketShipment(orderId, courierId);
       if (res.success && res.data) {
         toast.success(res.message || "Order manifested in Shiprocket!");
+        setCourierPickerOrder(null);
         onRefresh();
       } else {
         toast.error(res.message || "Failed to ship order via Shiprocket");
@@ -137,6 +155,39 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
       toast.error(err.message || "Shiprocket dispatch failed");
     } finally {
       setShippingOrderId(null);
+    }
+  };
+
+  /* ── Open the courier picker for an order ───────────── */
+  const openCourierPicker = async (order: Order) => {
+    setCourierPickerOrder(order);
+    setSelectedCourier("auto");
+    setQuotedCourierId(null);
+    setCourierOptions([]);
+    setCourierWeightKg(null);
+    setCourierIsCod(false);
+    setSurfaceOnly(true);
+    setCourierError(null);
+    setCourierLoading(true);
+    try {
+      const res = await getShiprocketCouriers(order._id);
+      setCourierWeightKg(res.weightKg ?? null);
+      setCourierIsCod(Boolean(res.isCod));
+      if (res.success && res.availableCouriers?.length) {
+        setCourierOptions(res.availableCouriers);
+        // Default to the courier the customer's delivery charge was based on,
+        // so the shipping cost matches what was collected at checkout.
+        if (res.quotedCourierId) {
+          setQuotedCourierId(res.quotedCourierId);
+          setSelectedCourier(res.quotedCourierId);
+        }
+      } else {
+        setCourierError(res.message || "No couriers available for this destination.");
+      }
+    } catch (err: any) {
+      setCourierError(err.message || "Could not load couriers.");
+    } finally {
+      setCourierLoading(false);
     }
   };
 
@@ -239,6 +290,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
           <div class="totals">
             <div><span>Items Subtotal:</span><span>₹${order.itemsPrice?.toFixed(0)}</span></div>
             <div><span>Shipping:</span><span>₹${order.shippingPrice?.toFixed(0)}</span></div>
+            ${order.codFee ? `<div><span>COD Handling Fee:</span><span>₹${order.codFee.toFixed(0)}</span></div>` : ""}
             <div><span>GST (5%):</span><span>₹${order.taxPrice?.toFixed(0)}</span></div>
             <div class="grand-total"><span>Total Amount:</span><span>₹${order.totalPrice?.toFixed(0)}</span></div>
           </div>
@@ -278,6 +330,20 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
   };
 
   const hasActiveFilters = search || statusFilter !== "all" || paymentFilter !== "all" || dateFrom || dateTo;
+
+  /* ── Courier list, air options hidden by default ────── */
+  const surfaceCouriers = courierOptions.filter((c) => c.isSurface);
+  const airCount = courierOptions.length - surfaceCouriers.length;
+  // If Shiprocket flagged nothing as surface, filtering would empty the list.
+  const visibleCouriers = (() => {
+    const base = surfaceOnly && surfaceCouriers.length > 0 ? surfaceCouriers : courierOptions;
+    // Never hide the option the operator has actually selected.
+    if (typeof selectedCourier === "number" && !base.some((c) => c.id === selectedCourier)) {
+      const picked = courierOptions.find((c) => c.id === selectedCourier);
+      if (picked) return [...base, picked];
+    }
+    return base;
+  })();
 
   return (
     <div className="space-y-4">
@@ -454,14 +520,19 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                               <div className="text-[9px] text-[#6d5c4c] truncate">{o.shiprocket?.courierName || "Blue Dart Air"}</div>
                             </div>
                           ) : (
-                            <button
-                              onClick={() => handleShipWithShiprocket(o._id)}
-                              disabled={isDispatching || o.status === "Cancelled"}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#3a2012] hover:bg-[#8a4f27] text-white font-mono text-[9px] font-semibold transition disabled:opacity-50"
-                            >
-                              {isDispatching ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
-                              <span>Ship with Shiprocket</span>
-                            </button>
+                            <div className="space-y-1">
+                              <button
+                                onClick={() => openCourierPicker(o)}
+                                disabled={isDispatching || o.status === "Cancelled"}
+                                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#3a2012] hover:bg-[#8a4f27] text-white font-mono text-[9px] font-semibold transition disabled:opacity-50"
+                              >
+                                {isDispatching ? <Loader2 size={10} className="animate-spin" /> : <Truck size={10} />}
+                                <span>{o.shiprocket?.shipmentId ? "Choose courier" : "Ship with Shiprocket"}</span>
+                              </button>
+                              {o.shiprocket?.shipmentId && (
+                                <div className="text-[8px] font-mono text-emerald-700">In Shiprocket · New</div>
+                              )}
+                            </div>
                           )}
                         </td>
 
@@ -571,12 +642,12 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                           </button>
                         ) : (
                           <button
-                            onClick={() => handleShipWithShiprocket(o._id)}
+                            onClick={() => openCourierPicker(o)}
                             disabled={shippingOrderId === o._id || o.status === "Cancelled"}
                             className="w-full text-center text-[9px] font-mono font-semibold bg-[#3a2012] text-white py-1 rounded hover:bg-[#8a4f27] transition flex items-center justify-center gap-1 disabled:opacity-50"
                           >
-                            {shippingOrderId === o._id ? <Loader2 size={10} className="animate-spin" /> : <Send size={10} />}
-                            <span>Ship with Shiprocket</span>
+                            {shippingOrderId === o._id ? <Loader2 size={10} className="animate-spin" /> : <Truck size={10} />}
+                            <span>{o.shiprocket?.shipmentId ? "Choose courier" : "Ship with Shiprocket"}</span>
                           </button>
                         )}
                       </div>
@@ -586,6 +657,198 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* ── COURIER PICKER MODAL ─────────────────────────── */}
+      {courierPickerOrder && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
+            <div className="flex items-center justify-between border-b border-[#241a12]/10 pb-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-[#3a2012] text-white flex items-center justify-center">
+                  <Truck size={16} />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-[#241a12]">Choose Courier Partner</h3>
+                  <p className="text-[10px] font-mono text-[#6d5c4c]">
+                    Order #{courierPickerOrder._id.substring(0, 8)} → {courierPickerOrder.shippingAddress?.city || ""}{" "}
+                    {courierPickerOrder.shippingAddress?.postalCode || ""}
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setCourierPickerOrder(null)}
+                className="p-1 rounded-md text-[#6d5c4c] hover:bg-[#faf7f2]"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* What the quote is actually based on. Without this an operator
+                seeing ₹400 cannot tell whether it is freight, a COD collection
+                fee, or a parcel weight that came out wrong. The customer is
+                charged the courier rate as-is, so "Customer paid" should track
+                the quoted courier below. */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-[#faf7f2] border border-[#241a12]/8 rounded-lg px-3 py-2">
+                <p className="text-[9px] text-[#6d5c4c] uppercase font-mono tracking-wider">Customer paid</p>
+                <p className="text-xs font-mono font-bold text-[#241a12]">
+                  ₹{Math.round(courierPickerOrder.shippingPrice || 0)}
+                </p>
+              </div>
+              <div className="bg-[#faf7f2] border border-[#241a12]/8 rounded-lg px-3 py-2">
+                <p className="text-[9px] text-[#6d5c4c] uppercase font-mono tracking-wider">Parcel weight</p>
+                <p className="text-xs font-mono font-bold text-[#241a12]">
+                  {courierWeightKg != null ? `${courierWeightKg} kg` : "—"}
+                </p>
+              </div>
+              <div className="bg-[#faf7f2] border border-[#241a12]/8 rounded-lg px-3 py-2">
+                <p className="text-[9px] text-[#6d5c4c] uppercase font-mono tracking-wider">Payment</p>
+                <p className={`text-xs font-mono font-bold ${courierIsCod ? "text-amber-700" : "text-emerald-700"}`}>
+                  {courierIsCod ? "COD" : "Prepaid"}
+                </p>
+              </div>
+            </div>
+
+            {courierIsCod && (
+              <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5">
+                COD order — Shiprocket bundles a collection fee (a % of order value) into every rate
+                below. On a high-value order that fee, not freight, is most of the number.
+              </p>
+            )}
+
+            {courierLoading ? (
+              <div className="py-10 text-center text-[#6d5c4c] space-y-2">
+                <Loader2 size={22} className="animate-spin mx-auto text-[#8a4f27]" />
+                <p className="text-xs">Loading couriers for this PIN code…</p>
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-[320px] overflow-y-auto">
+                {/* Auto option — always available */}
+                <label
+                  className={`flex items-center justify-between gap-3 p-2.5 rounded-lg border cursor-pointer transition ${
+                    selectedCourier === "auto" ? "border-[#8a4f27] bg-[#faf7f2]" : "border-[#241a12]/10 hover:border-[#8a4f27]/40"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5">
+                    <input
+                      type="radio"
+                      name="courier"
+                      checked={selectedCourier === "auto"}
+                      onChange={() => setSelectedCourier("auto")}
+                      className="accent-[#8a4f27]"
+                    />
+                    <div>
+                      <p className="text-xs font-semibold text-[#241a12]">Auto — let Shiprocket choose</p>
+                      <p className="text-[10px] text-[#6d5c4c]">
+                        Uses Shiprocket's priority rules — may pick a pricier air courier than the
+                        customer paid for
+                      </p>
+                    </div>
+                  </div>
+                </label>
+
+                {courierError && (
+                  <p className="text-[10px] text-amber-700 bg-amber-50 border border-amber-200 rounded-md px-2.5 py-1.5">
+                    {courierError} You can still ship with Auto.
+                  </p>
+                )}
+
+                {surfaceCouriers.length > 0 && airCount > 0 && (
+                  <label className="flex items-center gap-2 px-1 py-1 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={surfaceOnly}
+                      onChange={(e) => setSurfaceOnly(e.target.checked)}
+                      className="accent-[#8a4f27]"
+                    />
+                    <span className="text-[10px] text-[#6d5c4c]">
+                      Surface only — hides {airCount} air courier{airCount > 1 ? "s" : ""} (usually
+                      2–3× the price for dry goods)
+                    </span>
+                  </label>
+                )}
+
+                {visibleCouriers.map((c) => (
+                  <label
+                    key={c.id}
+                    className={`flex items-center justify-between gap-3 p-2.5 rounded-lg border cursor-pointer transition ${
+                      selectedCourier === c.id ? "border-[#8a4f27] bg-[#faf7f2]" : "border-[#241a12]/10 hover:border-[#8a4f27]/40"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <input
+                        type="radio"
+                        name="courier"
+                        checked={selectedCourier === c.id}
+                        onChange={() => setSelectedCourier(c.id)}
+                        className="accent-[#8a4f27]"
+                      />
+                      <div>
+                        <p className="text-xs font-semibold text-[#241a12] flex items-center gap-1.5">
+                          {c.name}
+                          {c.id === quotedCourierId && (
+                            <span className="px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[8px] font-mono font-bold uppercase">
+                              Quoted
+                            </span>
+                          )}
+                          {c.isSurface === false && (
+                            <span className="px-1.5 py-0.5 rounded bg-sky-100 text-sky-800 text-[8px] font-mono font-bold uppercase">
+                              Air
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-[10px] text-[#6d5c4c]">
+                          {c.etd ? `ETA ${c.etd}` : c.estimatedDays ? `${c.estimatedDays} days` : "—"}
+                          {typeof c.rating === "number" && c.rating > 0 && ` · ★ ${c.rating.toFixed(1)}`}
+                        </p>
+                      </div>
+                    </div>
+                    {/* Split the total so a big number reads as "mostly COD fee"
+                        rather than "delivery is absurdly expensive". */}
+                    <div className="text-right shrink-0">
+                      <span className="text-xs font-mono font-semibold text-[#241a12]">
+                        ₹{Math.ceil(Number(c.rate) || 0)}
+                      </span>
+                      {Number(c.codCharges) > 0 && (
+                        <p className="text-[9px] text-[#6d5c4c] font-mono whitespace-nowrap">
+                          ₹{Math.ceil(Number(c.freightCharge) || 0)} freight + ₹
+                          {Math.ceil(Number(c.codCharges))} COD
+                        </p>
+                      )}
+                    </div>
+                  </label>
+                ))}
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-[#241a12]/10">
+              <button
+                onClick={() => setCourierPickerOrder(null)}
+                className="px-3 py-1.5 text-xs border border-[#241a12]/20 rounded-md font-semibold text-[#241a12] hover:bg-[#faf7f2] transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() =>
+                  handleShipWithShiprocket(
+                    courierPickerOrder._id,
+                    selectedCourier === "auto" ? undefined : selectedCourier
+                  )
+                }
+                disabled={courierLoading || shippingOrderId === courierPickerOrder._id}
+                className="px-4 py-1.5 text-xs bg-[#3a2012] text-white rounded-md font-semibold hover:bg-[#8a4f27] transition flex items-center gap-1.5 disabled:opacity-50"
+              >
+                {shippingOrderId === courierPickerOrder._id ? (
+                  <Loader2 size={12} className="animate-spin" />
+                ) : (
+                  <Send size={12} />
+                )}
+                <span>Assign courier &amp; generate AWB</span>
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
