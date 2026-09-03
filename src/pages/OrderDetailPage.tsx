@@ -99,9 +99,17 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
         </div>
 
         <div className="space-y-1">
-          <p className="font-mono text-[#8a4f27] font-semibold text-[10px] uppercase">Pickup & Logistics</p>
-          <p className="text-[#241a12]">Lane: <span className="font-mono">{order.pickupLane || "riverside"}</span></p>
-          <p className="text-[#241a12]">Slot: <span className="font-mono">{order.pickupSlot || "ASAP"}</span></p>
+          <p className="font-mono text-[#8a4f27] font-semibold text-[10px] uppercase">Fulfilment & Payment</p>
+          {order.fulfillmentMethod === "pickup" ? (
+            <>
+              <p className="text-[#8a4f27] font-semibold">🏬 Store Pickup — customer collects in person</p>
+              <p className="text-[#6d5c4c]">No courier · not sent to Shiprocket</p>
+              <p className="text-[#241a12]">Collecting: <span className="font-mono">{order.shippingAddress?.fullName || "—"}</span></p>
+              <p className="text-[#241a12]">Phone: <span className="font-mono">{order.shippingAddress?.phone || "—"}</span></p>
+            </>
+          ) : (
+            <p className="text-[#241a12]">Method: <span className="font-mono">Courier delivery</span></p>
+          )}
           <p className="text-[#241a12]">Payment Method: <span className="font-mono">{order.paymentMethod}</span></p>
         </div>
       </div>

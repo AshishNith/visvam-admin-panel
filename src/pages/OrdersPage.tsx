@@ -22,6 +22,7 @@ import {
   FileText,
   MapPin,
   CheckCircle2,
+  Store,
 } from "lucide-react";
 import {
   Order,
@@ -259,17 +260,28 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
 
           <div style="display: flex; justify-content: space-between; margin-bottom: 20px; font-size: 12px;">
             <div>
-              <strong style="color: #6d5c4c; font-size: 10px; text-transform: uppercase;">Ship To:</strong>
+              <strong style="color: #6d5c4c; font-size: 10px; text-transform: uppercase;">${order.fulfillmentMethod === "pickup" ? "Collected By:" : "Ship To:"}</strong>
               <p style="margin: 4px 0;"><strong>${order.shippingAddress?.fullName || "Valued Customer"}</strong></p>
-              <p style="margin: 2px 0;">${order.shippingAddress?.address || "Address"}</p>
+              ${
+                order.fulfillmentMethod === "pickup"
+                  ? `<p style="margin: 2px 0;">Phone: ${order.shippingAddress?.phone || "N/A"}</p>`
+                  : `<p style="margin: 2px 0;">${order.shippingAddress?.address || "Address"}</p>
               <p style="margin: 2px 0;">${order.shippingAddress?.city || ""}, ${order.shippingAddress?.state || ""} ${order.shippingAddress?.postalCode || ""}</p>
-              <p style="margin: 2px 0;">Phone: ${order.shippingAddress?.phone || "N/A"}</p>
+              <p style="margin: 2px 0;">Phone: ${order.shippingAddress?.phone || "N/A"}</p>`
+              }
             </div>
             <div style="text-align: right;">
-              <strong style="color: #6d5c4c; font-size: 10px; text-transform: uppercase;">Shipment Details:</strong>
+              ${
+                order.fulfillmentMethod === "pickup"
+                  ? `<strong style="color: #8a4f27; font-size: 10px; text-transform: uppercase;">Store Pickup</strong>
+              <p style="margin: 4px 0;"><strong>Customer collects in person</strong></p>
+              <p style="margin: 2px 0;">No courier — do not book Shiprocket</p>
+              <p style="margin: 2px 0;">Payment: <strong>${order.paymentMethod}</strong> (${order.isPaid ? "PAID" : "PAY ON PICKUP"})</p>`
+                  : `<strong style="color: #6d5c4c; font-size: 10px; text-transform: uppercase;">Shipment Details:</strong>
               <p style="margin: 4px 0;">Courier: <strong>${order.shiprocket?.courierName || "Shiprocket Express"}</strong></p>
               <p style="margin: 2px 0; font-family: monospace;">AWB: <strong>${order.shiprocket?.awbCode || "Pending"}</strong></p>
-              <p style="margin: 2px 0;">Payment: <strong>${order.paymentMethod}</strong> (${order.isPaid ? "PAID" : "COD"})</p>
+              <p style="margin: 2px 0;">Payment: <strong>${order.paymentMethod}</strong> (${order.isPaid ? "PAID" : "COD"})</p>`
+              }
             </div>
           </div>
 
@@ -485,6 +497,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                     const sc = STATUS_CFG[o.status] || STATUS_CFG.Pending;
                     const isShippedWithSR = Boolean(o.shiprocket?.awbCode);
                     const isDispatching = shippingOrderId === o._id;
+                    const isPickup = o.fulfillmentMethod === "pickup";
 
                     return (
                       <tr key={o._id} className={`hover:bg-[#faf7f2]/50 transition ${selected.has(o._id) ? "bg-blue-50/30" : ""}`}>
@@ -497,7 +510,14 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                           <Link to={`/orders/${o._id}`} className="hover:underline">#{o._id.substring(0, 8)}</Link>
                         </td>
                         <td className="py-2.5 px-3 text-[#241a12] truncate max-w-[140px]">
-                          <div>{o.shippingAddress?.fullName || o.guestEmail || o.user?.email || "Customer"}</div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="truncate">{o.shippingAddress?.fullName || o.guestEmail || o.user?.email || "Customer"}</span>
+                            {isPickup && (
+                              <span className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-clay/10 text-[#8a4f27] text-[8px] font-mono font-bold uppercase">
+                                <Store size={8} /> Pickup
+                              </span>
+                            )}
+                          </div>
                           <div className="text-[10px] text-[#6d5c4c] font-mono truncate">{o.guestEmail || o.user?.email || ""}</div>
                         </td>
                         <td className="py-2.5 px-3 text-[#6d5c4c]">
@@ -507,7 +527,12 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
 
                         {/* Shiprocket Fulfillment Column */}
                         <td className="py-2.5 px-3">
-                          {isShippedWithSR ? (
+                          {isPickup ? (
+                            <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-clay/10 border border-clay/30 text-[#8a4f27] font-mono text-[9px] font-semibold">
+                              <Store size={10} />
+                              <span>Store Pickup — no courier</span>
+                            </div>
+                          ) : isShippedWithSR ? (
                             <div className="space-y-1">
                               <button
                                 onClick={() => openTrackingModal(o)}
@@ -623,8 +648,13 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                             {o.isPaid ? "Paid" : "Due"}
                           </span>
                         </div>
-                        <p className="text-[10px] text-[#241a12] truncate font-medium">
-                          {o.shippingAddress?.fullName || o.guestEmail || o.user?.email || "Guest"}
+                        <p className="text-[10px] text-[#241a12] truncate font-medium flex items-center gap-1.5">
+                          <span className="truncate">{o.shippingAddress?.fullName || o.guestEmail || o.user?.email || "Guest"}</span>
+                          {o.fulfillmentMethod === "pickup" && (
+                            <span className="shrink-0 inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-clay/10 text-[#8a4f27] text-[8px] font-mono font-bold uppercase">
+                              <Store size={8} /> Pickup
+                            </span>
+                          )}
                         </p>
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] text-[#6d5c4c]">{o.orderItems.length} items</span>
@@ -632,7 +662,12 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                         </div>
 
                         {/* Shiprocket Kanban Button */}
-                        {o.shiprocket?.awbCode ? (
+                        {o.fulfillmentMethod === "pickup" ? (
+                          <div className="w-full text-center text-[9px] font-mono font-semibold bg-clay/10 border border-clay/30 text-[#8a4f27] py-1 rounded flex items-center justify-center gap-1">
+                            <Store size={10} />
+                            <span>Store Pickup — no courier</span>
+                          </div>
+                        ) : o.shiprocket?.awbCode ? (
                           <button
                             onClick={() => openTrackingModal(o)}
                             className="w-full text-left text-[9px] font-mono text-indigo-700 bg-indigo-50 px-2 py-1 rounded flex items-center justify-between border border-indigo-200"

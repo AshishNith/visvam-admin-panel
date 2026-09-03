@@ -114,6 +114,8 @@ export interface Order {
   orderItems: OrderItem[];
   pickupLane?: string;
   pickupSlot?: string;
+  /** "pickup" = customer collects from the Sector 63 warehouse (no courier, never in Shiprocket). */
+  fulfillmentMethod?: "ship" | "pickup";
   shippingAddress?: {
     fullName?: string;
     address?: string;
