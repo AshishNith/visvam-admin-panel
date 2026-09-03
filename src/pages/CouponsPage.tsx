@@ -382,18 +382,29 @@ function Field({ label, hint, children }: { label: string; hint?: string; childr
 }
 
 function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
+  // One <button> is the whole control — no wrapping <label>, which can
+  // re-dispatch the click to the switch and make a tap register twice.
   return (
-    <label className="flex items-center gap-3 cursor-pointer group">
-      <button
-        type="button"
-        onClick={() => onChange(!checked)}
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      className="flex items-center gap-3 cursor-pointer group text-left"
+    >
+      <span
         className={`w-9 h-5 rounded-full transition-colors relative shrink-0 ${checked ? "bg-emerald-500" : "bg-[#ccc]"}`}
       >
         <span
           className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${checked ? "left-[18px]" : "left-0.5"}`}
         />
-      </button>
-      <span className="text-xs text-[#241a12] group-hover:text-[#8a4f27] transition">{label}</span>
-    </label>
+      </span>
+      <span className="text-xs text-[#241a12] group-hover:text-[#8a4f27] transition">
+        {label}
+        <span className={`ml-1.5 font-semibold ${checked ? "text-emerald-600" : "text-[#9c8c7c]"}`}>
+          {checked ? "· ON" : "· OFF"}
+        </span>
+      </span>
+    </button>
   );
 }
