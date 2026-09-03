@@ -169,6 +169,11 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
       <div className="bg-white p-5 rounded border border-[#241a12]/10 flex justify-between items-center text-xs">
         <div className="space-y-1 text-[#6d5c4c]">
           <p>Subtotal: ₹{order.itemsPrice?.toFixed(2)}</p>
+          {Boolean(order.discountAmount) && (
+            <p className="text-emerald-700">
+              Discount{order.couponCode ? ` (${order.couponCode})` : ""}: −₹{order.discountAmount!.toFixed(2)}
+            </p>
+          )}
           <p>Tax (5%): ₹{order.taxPrice?.toFixed(2)}</p>
           <p>Shipping: ₹{order.shippingPrice?.toFixed(2)}</p>
           {Boolean(order.codFee) && <p>COD handling fee: ₹{order.codFee!.toFixed(2)}</p>}

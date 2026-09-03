@@ -301,6 +301,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
 
           <div class="totals">
             <div><span>Items Subtotal:</span><span>₹${order.itemsPrice?.toFixed(0)}</span></div>
+            ${order.discountAmount ? `<div><span>Discount${order.couponCode ? ` (${order.couponCode})` : ""}:</span><span>−₹${order.discountAmount.toFixed(0)}</span></div>` : ""}
             <div><span>Shipping:</span><span>₹${order.shippingPrice?.toFixed(0)}</span></div>
             ${order.codFee ? `<div><span>COD Handling Fee:</span><span>₹${order.codFee.toFixed(0)}</span></div>` : ""}
             <div><span>GST (5%):</span><span>₹${order.taxPrice?.toFixed(0)}</span></div>

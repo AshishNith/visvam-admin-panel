@@ -14,6 +14,7 @@ import EmployeesPage from "./pages/EmployeesPage";
 import UsersPage from "./pages/UsersPage";
 import ReportsPage from "./pages/ReportsPage";
 import SettingsPage from "./pages/SettingsPage";
+import CouponsPage from "./pages/CouponsPage";
 
 import {
   getAdminToken,
@@ -131,6 +132,7 @@ export default function App() {
             path="merchandising"
             element={<MerchandisingPage products={products} />}
           />
+          <Route path="coupons" element={<CouponsPage />} />
           <Route
             path="orders"
             element={

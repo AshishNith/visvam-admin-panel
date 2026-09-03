@@ -128,6 +128,10 @@ export interface Order {
   };
   paymentMethod: string;
   itemsPrice: number;
+  /** Coupon code applied at checkout (uppercased), if any. */
+  couponCode?: string;
+  /** Rupee amount taken off the items subtotal by the coupon. 0/absent if none. */
+  discountAmount?: number;
   taxPrice: number;
   shippingPrice: number;
   /** Cash-on-Delivery surcharge. Zero for prepaid orders. */
@@ -347,6 +351,81 @@ export async function updateStoreSetting(
       method: "PUT",
       headers: getAuthHeaders(),
       body: JSON.stringify({ value }),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
+
+// Coupons API — percentage-off discount codes customers enter at checkout.
+export interface Coupon {
+  _id: string;
+  code: string;
+  discountPercent: number;
+  active: boolean;
+  /** ISO date string, or null/undefined for "never expires". */
+  expiresAt?: string | null;
+  /** Minimum cart subtotal (rupees) required. 0 = no minimum. */
+  minOrderValue: number;
+  /** Auto-disables after this many redemptions. 0 = unlimited. */
+  maxRedemptions: number;
+  /** Each customer email can redeem once. */
+  oncePerCustomer: boolean;
+  timesRedeemed: number;
+  redeemedEmails?: string[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export async function getCoupons(): Promise<Coupon[]> {
+  try {
+    const res = await fetch(`${API_BASE}/coupons`, { headers: getAuthHeaders() });
+    if (!res.ok) throw new Error("Failed to fetch coupons");
+    const json = await res.json();
+    return json.data || [];
+  } catch (err) {
+    console.error("Coupons fetch error:", err);
+    return [];
+  }
+}
+
+export async function createCoupon(
+  data: Partial<Coupon>
+): Promise<{ success: boolean; data?: Coupon; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/coupons`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
+
+export async function updateCoupon(
+  id: string,
+  data: Partial<Coupon>
+): Promise<{ success: boolean; data?: Coupon; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/coupons/${id}`, {
+      method: "PUT",
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
+
+export async function deleteCoupon(id: string): Promise<{ success: boolean; message?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/coupons/${id}`, {
+      method: "DELETE",
+      headers: getAuthHeaders(),
     });
     return await res.json();
   } catch (err: any) {
