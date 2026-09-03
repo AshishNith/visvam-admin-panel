@@ -500,8 +500,17 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                     const isPickup = o.fulfillmentMethod === "pickup";
 
                     return (
-                      <tr key={o._id} className={`hover:bg-[#faf7f2]/50 transition ${selected.has(o._id) ? "bg-blue-50/30" : ""}`}>
-                        <td className="py-2.5 px-3">
+                      <tr
+                        key={o._id}
+                        className={`transition ${
+                          selected.has(o._id)
+                            ? "bg-blue-50/30"
+                            : isPickup
+                              ? "bg-clay/[0.07] hover:bg-clay/[0.13]"
+                              : "hover:bg-[#faf7f2]/50"
+                        }`}
+                      >
+                        <td className={`py-2.5 px-3 ${isPickup ? "border-l-[3px] border-clay" : ""}`}>
                           <button onClick={() => toggleOne(o._id)} className="text-[#6d5c4c] hover:text-[#241a12]">
                             {selected.has(o._id) ? <CheckSquare size={14} className="text-blue-600" /> : <Square size={14} />}
                           </button>
@@ -509,12 +518,12 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                         <td className="py-2.5 px-3 font-mono text-[#8a4f27] font-medium">
                           <Link to={`/orders/${o._id}`} className="hover:underline">#{o._id.substring(0, 8)}</Link>
                         </td>
-                        <td className="py-2.5 px-3 text-[#241a12] truncate max-w-[140px]">
+                        <td className="py-2.5 px-3 text-[#241a12] max-w-[150px]">
                           <div className="flex items-center gap-1.5">
                             <span className="truncate">{o.shippingAddress?.fullName || o.guestEmail || o.user?.email || "Customer"}</span>
                             {isPickup && (
-                              <span className="shrink-0 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-clay/10 text-[#8a4f27] text-[8px] font-mono font-bold uppercase">
-                                <Store size={8} /> Pickup
+                              <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-clay text-white text-[9px] font-bold uppercase tracking-wide">
+                                <Store size={9} /> Pickup
                               </span>
                             )}
                           </div>
@@ -528,9 +537,9 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                         {/* Shiprocket Fulfillment Column */}
                         <td className="py-2.5 px-3">
                           {isPickup ? (
-                            <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-clay/10 border border-clay/30 text-[#8a4f27] font-mono text-[9px] font-semibold">
-                              <Store size={10} />
-                              <span>Store Pickup — no courier</span>
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-clay text-white font-mono text-[9px] font-bold uppercase tracking-wide">
+                              <Store size={11} />
+                              <span>Store Pickup · no courier</span>
                             </div>
                           ) : isShippedWithSR ? (
                             <div className="space-y-1">
@@ -638,7 +647,11 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                     statusOrders.map((o) => (
                       <div
                         key={o._id}
-                        className="p-2.5 rounded-lg border border-[#241a12]/8 hover:border-[#8a4f27]/30 hover:shadow-sm transition group bg-white space-y-2"
+                        className={`p-2.5 rounded-lg border transition group space-y-2 ${
+                          o.fulfillmentMethod === "pickup"
+                            ? "border-clay/40 border-l-[3px] border-l-clay bg-clay/[0.07] hover:shadow-sm"
+                            : "border-[#241a12]/8 bg-white hover:border-[#8a4f27]/30 hover:shadow-sm"
+                        }`}
                       >
                         <div className="flex items-center justify-between">
                           <Link to={`/orders/${o._id}`} className="text-[10px] font-mono text-[#8a4f27] font-medium hover:underline">
@@ -651,7 +664,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                         <p className="text-[10px] text-[#241a12] truncate font-medium flex items-center gap-1.5">
                           <span className="truncate">{o.shippingAddress?.fullName || o.guestEmail || o.user?.email || "Guest"}</span>
                           {o.fulfillmentMethod === "pickup" && (
-                            <span className="shrink-0 inline-flex items-center gap-0.5 px-1 py-0.5 rounded bg-clay/10 text-[#8a4f27] text-[8px] font-mono font-bold uppercase">
+                            <span className="shrink-0 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-clay text-white text-[8px] font-bold uppercase tracking-wide">
                               <Store size={8} /> Pickup
                             </span>
                           )}
@@ -663,9 +676,9 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
 
                         {/* Shiprocket Kanban Button */}
                         {o.fulfillmentMethod === "pickup" ? (
-                          <div className="w-full text-center text-[9px] font-mono font-semibold bg-clay/10 border border-clay/30 text-[#8a4f27] py-1 rounded flex items-center justify-center gap-1">
+                          <div className="w-full text-center text-[9px] font-mono font-bold uppercase tracking-wide bg-clay text-white py-1.5 rounded flex items-center justify-center gap-1">
                             <Store size={10} />
-                            <span>Store Pickup — no courier</span>
+                            <span>Store Pickup · no courier</span>
                           </div>
                         ) : o.shiprocket?.awbCode ? (
                           <button

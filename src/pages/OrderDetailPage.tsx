@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, CheckCircle2, Clock, AlertTriangle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Clock, AlertTriangle, Store } from "lucide-react";
 import { Order, updateOrderStatus } from "../lib/api";
 import { toast } from "sonner";
 
@@ -88,6 +88,19 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
           </select>
         </div>
       </div>
+
+      {order.fulfillmentMethod === "pickup" && (
+        <div className="flex items-start gap-3 bg-clay text-white p-4 rounded-lg">
+          <Store size={20} className="shrink-0 mt-0.5" />
+          <div>
+            <p className="font-semibold text-sm uppercase tracking-wide">Warehouse Pickup — customer collects in person</p>
+            <p className="text-white/85 text-xs mt-0.5">
+              Do not ship this order or push it to Shiprocket. Pack it and hold it at the Sector 63 counter.
+              {!order.isPaid && " Payment is due on collection."}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Info Card */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-white p-5 rounded border border-[#241a12]/10">
