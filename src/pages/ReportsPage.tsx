@@ -129,10 +129,16 @@ export default function ReportsPage({ products, orders }: ReportsPageProps) {
    1. SALES & PRODUCT PERFORMANCE REPORT
    ═══════════════════════════════════════════════════════════ */
 function SalesReport({ orders, products, range, allOrders }: { orders: Order[]; products: Product[]; range: DateRange; allOrders: Order[] }) {
-  const totalRevenue = orders.reduce((s, o) => s + (o.totalPrice || 0), 0);
-  const totalOrders = orders.length;
+  // A cancelled order is not a sale — the money was never collected, and a
+  // parcel the courier returned (RTO) lands in this status too. Counting them
+  // inflated revenue, AOV and units against cash that never arrived, so every
+  // figure in this report is built from `soldOrders` rather than `orders`.
+  const soldOrders = useMemo(() => orders.filter((o) => o.status !== "Cancelled"), [orders]);
+
+  const totalRevenue = soldOrders.reduce((s, o) => s + (o.totalPrice || 0), 0);
+  const totalOrders = soldOrders.length;
   const aov = totalOrders > 0 ? totalRevenue / totalOrders : 0;
-  const totalUnits = orders.reduce((s, o) => s + o.orderItems.reduce((ss, i) => ss + i.qty, 0), 0);
+  const totalUnits = soldOrders.reduce((s, o) => s + o.orderItems.reduce((ss, i) => ss + i.qty, 0), 0);
 
   // Daily revenue chart
   const chartData = useMemo(() => {
@@ -143,7 +149,7 @@ function SalesReport({ orders, products, range, allOrders }: { orders: Order[]; 
       const key = d.toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
       buckets[key] = { revenue: 0, orders: 0 };
     }
-    for (const o of orders) {
+    for (const o of soldOrders) {
       const key = new Date(o.createdAt).toLocaleDateString("en-IN", { day: "2-digit", month: "short" });
       if (key in buckets) {
         buckets[key].revenue += o.totalPrice || 0;
@@ -151,7 +157,7 @@ function SalesReport({ orders, products, range, allOrders }: { orders: Order[]; 
       }
     }
     return Object.entries(buckets).map(([name, d]) => ({ name, revenue: Math.round(d.revenue), orders: d.orders }));
-  }, [orders, range]);
+  }, [soldOrders, range]);
 
   // Category breakdown
   const categoryData = useMemo(() => {
@@ -176,7 +182,7 @@ function SalesReport({ orders, products, range, allOrders }: { orders: Order[]; 
   // Product breakdown table
   const productTable = useMemo(() => {
     const map: Record<string, { name: string; units: number; revenue: number; price: number; category: string }> = {};
-    for (const o of orders) {
+    for (const o of soldOrders) {
       for (const item of o.orderItems) {
         if (!map[item.slug]) {
           const prod = products.find((p) => p.slug === item.slug);
@@ -187,7 +193,7 @@ function SalesReport({ orders, products, range, allOrders }: { orders: Order[]; 
       }
     }
     return Object.values(map).sort((a, b) => b.revenue - a.revenue);
-  }, [orders, products]);
+  }, [soldOrders, products]);
 
   const handleExport = () => {
     downloadCSV(
@@ -321,6 +327,7 @@ function CustomerReport({ orders, range }: { orders: Order[]; range: DateRange }
   const customerData = useMemo(() => {
     const map: Record<string, { email: string; orders: number; totalSpent: number; firstOrder: Date; lastOrder: Date }> = {};
     for (const o of orders) {
+      if (o.status === "Cancelled") continue; // not spend — never collected
       const email = o.guestEmail || o.user?.email || "guest";
       if (!map[email]) {
         map[email] = { email, orders: 0, totalSpent: 0, firstOrder: new Date(o.createdAt), lastOrder: new Date(o.createdAt) };

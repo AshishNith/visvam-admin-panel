@@ -82,14 +82,22 @@ export default function DashboardPage({ products, orders, inquiries }: Dashboard
   const cutoff = new Date(Date.now() - rangeMs);
   const prevCutoff = new Date(cutoff.getTime() - rangeMs);
 
+  // Cancelled orders are excluded from every sales figure below. They are not
+  // sales: the money was never collected, and a parcel the courier returned
+  // (RTO) lands here too. Counting them inflated revenue, AOV and units against
+  // cash that never arrived. The status donut further down still reports the
+  // cancelled count, so nothing is hidden — it just isn't counted as income.
   const currentOrders = useMemo(
-    () => orders.filter((o) => new Date(o.createdAt) >= cutoff),
+    () => orders.filter((o) => new Date(o.createdAt) >= cutoff && o.status !== "Cancelled"),
     [orders, range]
   );
   const prevOrders = useMemo(
     () =>
       orders.filter(
-        (o) => new Date(o.createdAt) >= prevCutoff && new Date(o.createdAt) < cutoff
+        (o) =>
+          new Date(o.createdAt) >= prevCutoff &&
+          new Date(o.createdAt) < cutoff &&
+          o.status !== "Cancelled"
       ),
     [orders, range]
   );
@@ -155,6 +163,7 @@ export default function DashboardPage({ products, orders, inquiries }: Dashboard
   const productMatrix = useMemo(() => {
     const map: Record<string, { name: string; units: number; revenue: number; price: number }> = {};
     for (const o of orders) {
+      if (o.status === "Cancelled") continue; // never sold — don't credit the product
       for (const item of o.orderItems) {
         if (!map[item.slug]) {
           map[item.slug] = { name: item.name, units: 0, revenue: 0, price: item.price };
