@@ -129,14 +129,42 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
   };
 
   /* ── Inline status update ──────────────────────────── */
+  // Fulfilment status ONLY. Payment is a separate fact and is never inferred
+  // from it: a COD parcel marked "Shipped" has not been paid for yet, and a
+  // prepaid order moved back to "Processing" has not been un-paid. `isPaid` is
+  // left out of the request entirely so the server leaves it untouched.
   const handleStatusChange = async (id: string, newStatus: string) => {
-    const isPaid = newStatus === "Completed" || newStatus === "Shipped";
-    const res = await updateOrderStatus(id, newStatus, isPaid);
+    const res = await updateOrderStatus(id, newStatus);
     if (res.success) {
       toast.success(`Order #${id.substring(0, 8)} → ${newStatus}`);
       onRefresh();
     } else {
       toast.error(res.message || "Failed to update");
+    }
+  };
+
+  /* ── Payment status toggle ─────────────────────────── */
+  // Deliberately explicit and confirmed: this is the record of whether money
+  // has actually been received, so it must never change as a side effect of
+  // anything else.
+  const handlePaymentToggle = async (o: Order) => {
+    const next = !o.isPaid;
+    const amount = `₹${o.totalPrice?.toFixed(0)}`;
+    const collectedWhere =
+      o.fulfillmentMethod === "pickup" ? "collected at the counter" : "collected on delivery";
+    const ok = window.confirm(
+      next
+        ? `Mark order #${o._id.substring(0, 8)} as PAID?\n\n${amount} — only confirm this once the money has actually been ${collectedWhere}.`
+        : `Mark order #${o._id.substring(0, 8)} as UNPAID?\n\nThis reverses the payment record for ${amount}.`
+    );
+    if (!ok) return;
+
+    const res = await updateOrderStatus(o._id, o.status, next);
+    if (res.success) {
+      toast.success(`Order #${o._id.substring(0, 8)} marked ${next ? "Paid" : "Unpaid"}`);
+      onRefresh();
+    } else {
+      toast.error(res.message || "Failed to update payment status");
     }
   };
 
@@ -325,8 +353,8 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
   const bulkUpdateStatus = async (newStatus: string) => {
     let count = 0;
     for (const id of selected) {
-      const isPaid = newStatus === "Completed" || newStatus === "Shipped";
-      const res = await updateOrderStatus(id, newStatus, isPaid);
+      // Status only — bulk fulfilment moves must never rewrite payment records.
+      const res = await updateOrderStatus(id, newStatus);
       if (res.success) count++;
     }
     toast.success(`Updated ${count} order(s) to ${newStatus}`);
@@ -587,7 +615,8 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                         {/* Payment */}
                         <td className="py-2.5 px-3">
                           <button
-                            onClick={() => handleStatusChange(o._id, o.status)}
+                            onClick={() => handlePaymentToggle(o)}
+                            title={o.isPaid ? "Click to reverse this payment record" : "Click once the money has actually been received"}
                             className={`px-2 py-0.5 text-[9px] font-mono rounded font-semibold ${o.isPaid ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}
                           >
                             {o.isPaid ? "Paid ✓" : "Unpaid"}

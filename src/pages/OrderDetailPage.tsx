@@ -34,25 +34,39 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
     );
   }
 
+  // Fulfilment status only — `isPaid` is omitted so the server leaves the
+  // payment record alone. Shipping a COD parcel does not mean it is paid for.
   const handleStatusChange = async (newStatus: string) => {
-    const res = await updateOrderStatus(order._id, newStatus, order.isPaid);
+    const res = await updateOrderStatus(order._id, newStatus);
     if (res.success) {
       toast.success(`Order status updated to ${newStatus}`);
       setOrder({ ...order, status: newStatus as any });
       onRefresh();
     } else {
-      toast.error("Failed to update order status");
+      toast.error(res.message || "Failed to update order status");
     }
   };
 
+  // Money actually changing hands is its own deliberate, confirmed action.
   const handlePaymentToggle = async () => {
-    const res = await updateOrderStatus(order._id, order.status, !order.isPaid);
+    const next = !order.isPaid;
+    const amount = `₹${order.totalPrice?.toFixed(0)}`;
+    const collectedWhere =
+      order.fulfillmentMethod === "pickup" ? "collected at the counter" : "collected on delivery";
+    const ok = window.confirm(
+      next
+        ? `Mark this order as PAID?\n\n${amount} — only confirm this once the money has actually been ${collectedWhere}.`
+        : `Mark this order as UNPAID?\n\nThis reverses the payment record for ${amount}.`
+    );
+    if (!ok) return;
+
+    const res = await updateOrderStatus(order._id, order.status, next);
     if (res.success) {
-      toast.success(`Payment status marked as ${!order.isPaid ? "Paid" : "Pending"}`);
-      setOrder({ ...order, isPaid: !order.isPaid });
+      toast.success(`Payment status marked as ${next ? "Paid" : "Pending"}`);
+      setOrder({ ...order, isPaid: next });
       onRefresh();
     } else {
-      toast.error("Failed to update payment status");
+      toast.error(res.message || "Failed to update payment status");
     }
   };
 
