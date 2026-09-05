@@ -53,7 +53,7 @@ export default function ProductEditPage({ products, onRefresh }: ProductEditPage
     badge: "Bestseller",
     images: ["https://res.cloudinary.com/dvwpxb2oa/image/upload/f_auto,q_auto/visvam_harvest/01_Almonds_Badam/DSC00414.jpg"],
     description: "",
-    serving: "500g Pouch",
+    serving: "500g Pack",
     benefits: ["Rich in Vitamin E", "100% Organic"],
     bestseller: true,
     isNew: false,
@@ -675,7 +675,7 @@ export default function ProductEditPage({ products, onRefresh }: ProductEditPage
                 className="w-full px-3 py-2 bg-[#faf7f2] border border-[#241a12]/15 rounded text-xs outline-none focus:border-[#8a4f27] text-[#241a12]"
               />
               <p className="text-[10px] text-[#6d5c4c]/70 mt-1">
-                Gross weight of the packed pouch. Sets the Shiprocket delivery charge.
+                Gross weight of the packed unit. Sets the Shiprocket delivery charge.
               </p>
             </div>
           </div>
@@ -725,7 +725,7 @@ export default function ProductEditPage({ products, onRefresh }: ProductEditPage
               <label className="block text-[#6d5c4c] text-xs font-mono uppercase mb-1">Packaging / Serving</label>
               <input
                 type="text"
-                value={productForm.serving || "500g Pouch"}
+                value={productForm.serving || "500g Pack"}
                 onChange={(e) => setProductForm({ ...productForm, serving: e.target.value })}
                 className="w-full px-3 py-2 bg-[#faf7f2] border border-[#241a12]/15 rounded text-xs outline-none focus:border-[#8a4f27] text-[#241a12]"
               />
