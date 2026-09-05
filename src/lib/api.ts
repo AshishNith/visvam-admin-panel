@@ -370,7 +370,9 @@ export interface Coupon {
   minOrderValue: number;
   /** Auto-disables after this many redemptions. 0 = unlimited. */
   maxRedemptions: number;
-  /** Each customer email can redeem once. */
+  /** How many times one customer may redeem it. 0 = unlimited. */
+  usesPerCustomer: number;
+  /** @deprecated Superseded by `usesPerCustomer`; kept for older coupons. */
   oncePerCustomer: boolean;
   timesRedeemed: number;
   redeemedEmails?: string[];

@@ -13,7 +13,7 @@ interface CouponForm {
   code: string;
   discountPercent: string;
   active: boolean;
-  oncePerCustomer: boolean;
+  usesPerCustomer: string; // "" / "0" = unlimited per customer
   expiresAt: string; // yyyy-mm-dd, or "" for never
   minOrderValue: string; // "" / "0" = none
   maxRedemptions: string; // "" / "0" = unlimited
@@ -23,7 +23,7 @@ const EMPTY_FORM: CouponForm = {
   code: "",
   discountPercent: "10",
   active: true,
-  oncePerCustomer: false,
+  usesPerCustomer: "1",
   expiresAt: "",
   minOrderValue: "",
   maxRedemptions: "",
@@ -34,7 +34,11 @@ function toForm(c: Coupon): CouponForm {
     code: c.code,
     discountPercent: String(c.discountPercent),
     active: c.active,
-    oncePerCustomer: c.oncePerCustomer,
+    usesPerCustomer: c.usesPerCustomer
+      ? String(c.usesPerCustomer)
+      : c.oncePerCustomer
+        ? "1"
+        : "",
     expiresAt: c.expiresAt ? String(c.expiresAt).slice(0, 10) : "",
     minOrderValue: c.minOrderValue ? String(c.minOrderValue) : "",
     maxRedemptions: c.maxRedemptions ? String(c.maxRedemptions) : "",
@@ -54,7 +58,7 @@ function toPayload(f: CouponForm): Partial<Coupon> | string {
     code,
     discountPercent: pct,
     active: f.active,
-    oncePerCustomer: f.oncePerCustomer,
+    usesPerCustomer: Math.max(0, Math.round(Number(f.usesPerCustomer) || 0)),
     // Send the end of the chosen day so a coupon dated today still works today.
     expiresAt: f.expiresAt ? new Date(`${f.expiresAt}T23:59:59`).toISOString() : null,
     minOrderValue: Math.max(0, Math.round(Number(f.minOrderValue) || 0)),
@@ -232,16 +236,24 @@ export default function CouponsPage() {
                 className="w-full px-3 py-2 text-xs bg-[#faf7f2] border border-[#241a12]/10 rounded-lg outline-none focus:border-[#8a4f27]"
               />
             </Field>
+            <Field
+              label="Uses per customer"
+              hint="How many times one customer can use this code. Blank / 0 = as often as they like."
+            >
+              <input
+                type="number"
+                min={0}
+                value={form.usesPerCustomer}
+                onChange={(e) => setForm({ ...form, usesPerCustomer: e.target.value })}
+                placeholder="Unlimited"
+                className="w-full px-3 py-2 text-xs bg-[#faf7f2] border border-[#241a12]/10 rounded-lg outline-none focus:border-[#8a4f27]"
+              />
+            </Field>
             <div className="flex flex-col justify-center gap-3 pt-1">
               <Toggle
                 checked={form.active}
                 onChange={(v) => setForm({ ...form, active: v })}
                 label="Active (customers can use it)"
-              />
-              <Toggle
-                checked={form.oncePerCustomer}
-                onChange={(v) => setForm({ ...form, oncePerCustomer: v })}
-                label="One use per customer"
               />
             </div>
           </div>
@@ -298,6 +310,8 @@ export default function CouponsPage() {
                 coupons.map((c) => {
                   const expired = c.expiresAt && new Date(c.expiresAt).getTime() < Date.now();
                   const capHit = c.maxRedemptions > 0 && c.timesRedeemed >= c.maxRedemptions;
+                  // Older coupons predate `usesPerCustomer` and only carry the boolean.
+                  const perCustomer = c.usesPerCustomer || (c.oncePerCustomer ? 1 : 0);
                   const live = c.active && !expired && !capHit;
                   return (
                     <tr key={c._id} className="hover:bg-[#faf7f2]/50 transition">
@@ -330,7 +344,9 @@ export default function CouponsPage() {
                         {c.timesRedeemed}
                         {c.maxRedemptions > 0 ? ` / ${c.maxRedemptions}` : ""}
                       </td>
-                      <td className="py-2.5 px-3 text-[#6d5c4c]">{c.oncePerCustomer ? "Once" : "—"}</td>
+                      <td className="py-2.5 px-3 text-[#6d5c4c]">
+                        {perCustomer > 0 ? (perCustomer === 1 ? "Once" : `${perCustomer}×`) : "—"}
+                      </td>
                       <td className="py-2.5 px-3 text-right">
                         <div className="flex items-center justify-end gap-1">
                           <button
