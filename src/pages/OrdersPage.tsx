@@ -32,6 +32,7 @@ import {
   getShiprocketCouriers,
   getShiprocketLabel,
   trackOrderShipment,
+  orderItemPackLabel,
 } from "../lib/api";
 import { toast } from "sonner";
 
@@ -245,15 +246,18 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
     if (!win) return toast.error("Please allow popups to print packing slip");
 
     const itemsRows = order.orderItems
-      .map(
-        (i) => `
+      .map((i) => {
+        const pack = orderItemPackLabel(i);
+        return `
       <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${i.name}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${i.name}${
+          pack ? ` <span style="color: #8a4f27; font-weight: bold;">— ${pack}</span>` : ""
+        }</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${i.qty}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">₹${i.price}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">₹${i.price * i.qty}</td>
-      </tr>`
-      )
+      </tr>`;
+      })
       .join("");
 
     win.document.write(`
@@ -558,8 +562,27 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                           </div>
                           <div className="text-[10px] text-[#6d5c4c] font-mono truncate">{o.guestEmail || o.user?.email || ""}</div>
                         </td>
-                        <td className="py-2.5 px-3 text-[#6d5c4c]">
-                          {o.orderItems.length} item{o.orderItems.length > 1 ? "s" : ""}
+                        <td className="py-2.5 px-3 text-[#6d5c4c] max-w-[220px]">
+                          <div className="text-[9px] font-mono uppercase text-[#6d5c4c] mb-0.5">
+                            {o.orderItems.length} item{o.orderItems.length > 1 ? "s" : ""}
+                          </div>
+                          <div className="space-y-0.5">
+                            {o.orderItems.slice(0, 3).map((it, i) => {
+                              const pack = orderItemPackLabel(it);
+                              return (
+                                <div key={i} className="truncate text-[11px] text-[#241a12]">
+                                  {it.name}
+                                  {pack && <span className="text-[#8a4f27] font-mono"> · {pack}</span>}
+                                  <span className="text-[#6d5c4c]"> ×{it.qty}</span>
+                                </div>
+                              );
+                            })}
+                            {o.orderItems.length > 3 && (
+                              <div className="text-[10px] text-[#6d5c4c]">
+                                +{o.orderItems.length - 3} more
+                              </div>
+                            )}
+                          </div>
                         </td>
                         <td className="py-2.5 px-3 text-right font-semibold font-mono">₹{o.totalPrice?.toFixed(0)}</td>
 
@@ -702,6 +725,21 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                         <div className="flex items-center justify-between">
                           <span className="text-[10px] text-[#6d5c4c]">{o.orderItems.length} items</span>
                           <span className="text-[10px] font-semibold font-mono text-[#241a12]">₹{o.totalPrice?.toFixed(0)}</span>
+                        </div>
+                        <div className="space-y-0.5">
+                          {o.orderItems.slice(0, 3).map((it, i) => {
+                            const pack = orderItemPackLabel(it);
+                            return (
+                              <div key={i} className="truncate text-[9px] text-[#6d5c4c]">
+                                {it.name}
+                                {pack && <span className="text-[#8a4f27] font-mono"> · {pack}</span>}
+                                <span> ×{it.qty}</span>
+                              </div>
+                            );
+                          })}
+                          {o.orderItems.length > 3 && (
+                            <div className="text-[9px] text-[#6d5c4c]">+{o.orderItems.length - 3} more</div>
+                          )}
                         </div>
 
                         {/* Shiprocket Kanban Button */}

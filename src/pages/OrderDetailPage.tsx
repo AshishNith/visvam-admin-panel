@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Clock, AlertTriangle, Store } from "lucide-react";
-import { Order, updateOrderStatus } from "../lib/api";
+import { Order, updateOrderStatus, orderItemPackLabel } from "../lib/api";
 import { toast } from "sonner";
 
 interface OrderDetailPageProps {
@@ -158,13 +158,24 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
               </tr>
             </thead>
             <tbody className="divide-y divide-[#241a12]/5">
-              {order.orderItems.map((item, idx) => (
+              {order.orderItems.map((item, idx) => {
+                const pack = orderItemPackLabel(item);
+                return (
                 <tr key={idx}>
-                  <td className="p-2.5 flex items-center gap-2.5">
-                    {item.image && (
-                      <img src={item.image} alt={item.name} className="size-9 object-cover rounded bg-[#faf7f2] border border-[#241a12]/10" />
-                    )}
-                    <span className="font-medium text-[#241a12]">{item.name}</span>
+                  <td className="p-2.5">
+                    <div className="flex items-center gap-2.5">
+                      {item.image && (
+                        <img src={item.image} alt={item.name} className="size-9 object-cover rounded bg-[#faf7f2] border border-[#241a12]/10" />
+                      )}
+                      <div>
+                        <span className="font-medium text-[#241a12]">{item.name}</span>
+                        {pack && (
+                          <span className="block text-[10px] font-mono uppercase tracking-wide text-[#8a4f27]">
+                            {pack}
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   </td>
                   <td className="p-2.5 font-mono">x{item.qty}</td>
                   <td className="p-2.5 font-mono">₹{item.price?.toFixed(2)}</td>
@@ -172,7 +183,8 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
                     ₹{(item.qty * item.price).toFixed(2)}
                   </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
           </div>

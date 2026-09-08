@@ -91,6 +91,24 @@ export interface OrderItem {
   variantTitle?: string;
   variantSku?: string;
   selectedOptions?: Record<string, string>;
+  /** Pack-size text ("500g Pouch") for products sold without variants. */
+  serving?: string;
+}
+
+/**
+ * Human-readable pack size for one order line — "250g", "500g Pouch", etc.
+ * Prefers the chosen variant's title, then the selected options, then the
+ * product's default serving. Returns null when the order predates variants
+ * (older seeded orders) so callers can simply skip rendering it.
+ */
+export function orderItemPackLabel(item: OrderItem): string | null {
+  if (item.variantTitle && item.variantTitle.trim()) return item.variantTitle.trim();
+  if (item.selectedOptions) {
+    const vals = Object.values(item.selectedOptions).filter((v) => v && v.trim());
+    if (vals.length) return vals.join(" / ");
+  }
+  if (item.serving && item.serving.trim()) return item.serving.trim();
+  return null;
 }
 
 export interface ShiprocketDetails {
