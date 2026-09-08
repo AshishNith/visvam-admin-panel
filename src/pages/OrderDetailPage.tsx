@@ -167,11 +167,15 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
                       {item.image && (
                         <img src={item.image} alt={item.name} className="size-9 object-cover rounded bg-[#faf7f2] border border-[#241a12]/10" />
                       )}
-                      <div>
+                      <div className="space-y-1">
                         <span className="font-medium text-[#241a12]">{item.name}</span>
-                        {pack && (
-                          <span className="block text-[10px] font-mono uppercase tracking-wide text-[#8a4f27]">
+                        {pack ? (
+                          <span className="block w-fit px-2 py-0.5 rounded bg-[#8a4f27]/10 text-[#8a4f27] text-[11px] font-mono font-semibold uppercase tracking-wide">
                             {pack}
+                          </span>
+                        ) : (
+                          <span className="block text-[10px] text-[#6d5c4c] italic">
+                            pack size not recorded
                           </span>
                         )}
                       </div>

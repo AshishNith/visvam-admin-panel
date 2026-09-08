@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Search,
   Eye,
@@ -64,6 +64,7 @@ interface TrackingData {
 }
 
 export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
@@ -535,7 +536,8 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                     return (
                       <tr
                         key={o._id}
-                        className={`transition ${
+                        onClick={() => navigate(`/orders/${o._id}`)}
+                        className={`transition cursor-pointer ${
                           selected.has(o._id)
                             ? "bg-blue-50/30"
                             : isPickup
@@ -543,13 +545,16 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                               : "hover:bg-[#faf7f2]/50"
                         }`}
                       >
-                        <td className={`py-2.5 px-3 ${isPickup ? "border-l-[3px] border-clay" : ""}`}>
+                        <td
+                          onClick={(e) => e.stopPropagation()}
+                          className={`py-2.5 px-3 ${isPickup ? "border-l-[3px] border-clay" : ""}`}
+                        >
                           <button onClick={() => toggleOne(o._id)} className="text-[#6d5c4c] hover:text-[#241a12]">
                             {selected.has(o._id) ? <CheckSquare size={14} className="text-blue-600" /> : <Square size={14} />}
                           </button>
                         </td>
                         <td className="py-2.5 px-3 font-mono text-[#8a4f27] font-medium">
-                          <Link to={`/orders/${o._id}`} className="hover:underline">#{o._id.substring(0, 8)}</Link>
+                          <Link to={`/orders/${o._id}`} onClick={(e) => e.stopPropagation()} className="hover:underline">#{o._id.substring(0, 8)}</Link>
                         </td>
                         <td className="py-2.5 px-3 text-[#241a12] max-w-[150px]">
                           <div className="flex items-center gap-1.5">
@@ -562,32 +567,13 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                           </div>
                           <div className="text-[10px] text-[#6d5c4c] font-mono truncate">{o.guestEmail || o.user?.email || ""}</div>
                         </td>
-                        <td className="py-2.5 px-3 text-[#6d5c4c] max-w-[220px]">
-                          <div className="text-[9px] font-mono uppercase text-[#6d5c4c] mb-0.5">
-                            {o.orderItems.length} item{o.orderItems.length > 1 ? "s" : ""}
-                          </div>
-                          <div className="space-y-0.5">
-                            {o.orderItems.slice(0, 3).map((it, i) => {
-                              const pack = orderItemPackLabel(it);
-                              return (
-                                <div key={i} className="truncate text-[11px] text-[#241a12]">
-                                  {it.name}
-                                  {pack && <span className="text-[#8a4f27] font-mono"> · {pack}</span>}
-                                  <span className="text-[#6d5c4c]"> ×{it.qty}</span>
-                                </div>
-                              );
-                            })}
-                            {o.orderItems.length > 3 && (
-                              <div className="text-[10px] text-[#6d5c4c]">
-                                +{o.orderItems.length - 3} more
-                              </div>
-                            )}
-                          </div>
+                        <td className="py-2.5 px-3 text-[#6d5c4c]">
+                          {o.orderItems.length} item{o.orderItems.length > 1 ? "s" : ""}
                         </td>
                         <td className="py-2.5 px-3 text-right font-semibold font-mono">₹{o.totalPrice?.toFixed(0)}</td>
 
                         {/* Shiprocket Fulfillment Column */}
-                        <td className="py-2.5 px-3">
+                        <td onClick={(e) => e.stopPropagation()} className="py-2.5 px-3">
                           {isPickup ? (
                             <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded bg-clay text-white font-mono text-[9px] font-bold uppercase tracking-wide">
                               <Store size={11} />
@@ -623,7 +609,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                         </td>
 
                         {/* Inline Status Dropdown */}
-                        <td className="py-2.5 px-3">
+                        <td onClick={(e) => e.stopPropagation()} className="py-2.5 px-3">
                           <select
                             value={o.status}
                             onChange={(e) => handleStatusChange(o._id, e.target.value)}
@@ -636,7 +622,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                         </td>
 
                         {/* Payment */}
-                        <td className="py-2.5 px-3">
+                        <td onClick={(e) => e.stopPropagation()} className="py-2.5 px-3">
                           <button
                             onClick={() => handlePaymentToggle(o)}
                             title={o.isPaid ? "Click to reverse this payment record" : "Click once the money has actually been received"}
@@ -647,7 +633,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                         </td>
 
                         {/* Actions */}
-                        <td className="py-2.5 px-3 text-right">
+                        <td onClick={(e) => e.stopPropagation()} className="py-2.5 px-3 text-right">
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => printPackingSlip(o)}
@@ -700,14 +686,15 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                     statusOrders.map((o) => (
                       <div
                         key={o._id}
-                        className={`p-2.5 rounded-lg border transition group space-y-2 ${
+                        onClick={() => navigate(`/orders/${o._id}`)}
+                        className={`p-2.5 rounded-lg border transition group space-y-2 cursor-pointer ${
                           o.fulfillmentMethod === "pickup"
                             ? "border-clay/40 border-l-[3px] border-l-clay bg-clay/[0.07] hover:shadow-sm"
                             : "border-[#241a12]/8 bg-white hover:border-[#8a4f27]/30 hover:shadow-sm"
                         }`}
                       >
                         <div className="flex items-center justify-between">
-                          <Link to={`/orders/${o._id}`} className="text-[10px] font-mono text-[#8a4f27] font-medium hover:underline">
+                          <Link to={`/orders/${o._id}`} onClick={(e) => e.stopPropagation()} className="text-[10px] font-mono text-[#8a4f27] font-medium hover:underline">
                             #{o._id.substring(0, 8)}
                           </Link>
                           <span className={`px-1.5 py-0.5 text-[8px] font-mono rounded font-semibold ${o.isPaid ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
@@ -726,21 +713,6 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                           <span className="text-[10px] text-[#6d5c4c]">{o.orderItems.length} items</span>
                           <span className="text-[10px] font-semibold font-mono text-[#241a12]">₹{o.totalPrice?.toFixed(0)}</span>
                         </div>
-                        <div className="space-y-0.5">
-                          {o.orderItems.slice(0, 3).map((it, i) => {
-                            const pack = orderItemPackLabel(it);
-                            return (
-                              <div key={i} className="truncate text-[9px] text-[#6d5c4c]">
-                                {it.name}
-                                {pack && <span className="text-[#8a4f27] font-mono"> · {pack}</span>}
-                                <span> ×{it.qty}</span>
-                              </div>
-                            );
-                          })}
-                          {o.orderItems.length > 3 && (
-                            <div className="text-[9px] text-[#6d5c4c]">+{o.orderItems.length - 3} more</div>
-                          )}
-                        </div>
 
                         {/* Shiprocket Kanban Button */}
                         {o.fulfillmentMethod === "pickup" ? (
@@ -750,7 +722,10 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                           </div>
                         ) : o.shiprocket?.awbCode ? (
                           <button
-                            onClick={() => openTrackingModal(o)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openTrackingModal(o);
+                            }}
                             className="w-full text-left text-[9px] font-mono text-indigo-700 bg-indigo-50 px-2 py-1 rounded flex items-center justify-between border border-indigo-200"
                           >
                             <span>AWB: {o.shiprocket.awbCode}</span>
@@ -758,7 +733,10 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                           </button>
                         ) : (
                           <button
-                            onClick={() => openCourierPicker(o)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              openCourierPicker(o);
+                            }}
                             disabled={shippingOrderId === o._id || o.status === "Cancelled"}
                             className="w-full text-center text-[9px] font-mono font-semibold bg-[#3a2012] text-white py-1 rounded hover:bg-[#8a4f27] transition flex items-center justify-center gap-1 disabled:opacity-50"
                           >
