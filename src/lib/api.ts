@@ -95,19 +95,40 @@ export interface OrderItem {
   serving?: string;
 }
 
+/** Pull the first weight/volume token ("250g", "1 kg", "400 ml") out of a string. */
+function extractWeightToken(text?: string): string | null {
+  if (!text) return null;
+  const m = text.match(/\d+(?:\.\d+)?\s*(?:kg|kgs|g|gm|gms|gram|grams|ml|l|ltr|litre|liter)\b/i);
+  return m ? m[0].replace(/\s+/g, "").toLowerCase() : null;
+}
+
 /**
- * Human-readable pack size for one order line — "250g", "500g Pouch", etc.
- * Prefers the chosen variant's title, then the selected options, then the
- * product's default serving. Returns null when the order predates variants
- * (older seeded orders) so callers can simply skip rendering it.
+ * The pack size (weight) for one order line — "250g", "500g", "1kg", …
+ *
+ * Only ever returns an actual weight: it reads the "Weight" option chosen at
+ * checkout, then any weight token in the variant title or the product's serving
+ * text. Returns null when the order captured no weight — an older order, or an
+ * item re-ordered from history without its size — so the caller can say
+ * "not recorded" instead of showing a non-size label like "Pack" or "Pouch".
  */
 export function orderItemPackLabel(item: OrderItem): string | null {
-  if (item.variantTitle && item.variantTitle.trim()) return item.variantTitle.trim();
+  // 1. The size the customer actually picked at checkout.
   if (item.selectedOptions) {
-    const vals = Object.values(item.selectedOptions).filter((v) => v && v.trim());
-    if (vals.length) return vals.join(" / ");
+    for (const [key, val] of Object.entries(item.selectedOptions)) {
+      if (val && val.trim() && /weight|size|gram|quantity/i.test(key)) return val.trim();
+    }
+    for (const val of Object.values(item.selectedOptions)) {
+      const w = extractWeightToken(val);
+      if (w) return w;
+    }
   }
-  if (item.serving && item.serving.trim()) return item.serving.trim();
+  // 2. A weight in the variant title ("Reserve Super Jumbo · 500g", "250g").
+  const fromTitle = extractWeightToken(item.variantTitle);
+  if (fromTitle) return fromTitle;
+  if (item.variantTitle && /^\s*\d/.test(item.variantTitle)) return item.variantTitle.trim();
+  // 3. A weight in the serving text ("500g Box", "1kg Luxury Gift Box").
+  const fromServing = extractWeightToken(item.serving);
+  if (fromServing) return fromServing;
   return null;
 }
 
