@@ -120,8 +120,19 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs bg-white p-5 rounded border border-[#241a12]/10">
         <div className="space-y-1">
           <p className="font-mono text-[#8a4f27] font-semibold text-[10px] uppercase">Customer Contact</p>
-          <p className="font-medium text-[#241a12]">{order.user?.name || "Guest Customer"}</p>
-          <p className="text-[#6d5c4c]">{order.guestEmail || order.user?.email || "No Email Provided"}</p>
+          <p className="font-medium text-[#241a12]">
+            {order.shippingAddress?.fullName || order.user?.name || "Guest Customer"}
+          </p>
+          <p className="text-[#6d5c4c]">{order.guestEmail || order.user?.email || order.shippingAddress?.email || "No Email Provided"}</p>
+          <p className="text-[#241a12]">
+            Phone:{" "}
+            <a
+              href={order.shippingAddress?.phone ? `tel:${order.shippingAddress.phone}` : undefined}
+              className="font-mono font-semibold text-[#8a4f27] hover:underline"
+            >
+              {order.shippingAddress?.phone || "Not provided"}
+            </a>
+          </p>
           <p className="text-[#6d5c4c] font-mono text-[11px]">Placed: {new Date(order.createdAt).toLocaleString()}</p>
         </div>
 
@@ -140,6 +151,45 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
           <p className="text-[#241a12]">Payment Method: <span className="font-mono">{order.paymentMethod}</span></p>
         </div>
       </div>
+
+      {/* Delivery Address — the address & phone the customer entered at checkout */}
+      {order.fulfillmentMethod !== "pickup" && (
+        <div className="bg-white p-5 rounded border border-[#241a12]/10 space-y-1 text-xs">
+          <p className="font-mono text-[#8a4f27] font-semibold text-[10px] uppercase">Delivery Address</p>
+          {order.shippingAddress ? (
+            <>
+              <p className="font-medium text-[#241a12]">{order.shippingAddress.fullName || "—"}</p>
+              {order.shippingAddress.address && (
+                <p className="text-[#6d5c4c]">{order.shippingAddress.address}</p>
+              )}
+              <p className="text-[#6d5c4c]">
+                {[
+                  order.shippingAddress.city,
+                  order.shippingAddress.state,
+                  order.shippingAddress.postalCode,
+                ]
+                  .filter(Boolean)
+                  .join(", ") || "—"}
+                {order.shippingAddress.country ? ` · ${order.shippingAddress.country}` : ""}
+              </p>
+              <p className="text-[#241a12] pt-1">
+                Phone:{" "}
+                <a
+                  href={order.shippingAddress.phone ? `tel:${order.shippingAddress.phone}` : undefined}
+                  className="font-mono font-semibold text-[#8a4f27] hover:underline"
+                >
+                  {order.shippingAddress.phone || "Not provided"}
+                </a>
+              </p>
+              {order.shippingAddress.email && (
+                <p className="text-[#6d5c4c]">Email: <span className="font-mono">{order.shippingAddress.email}</span></p>
+              )}
+            </>
+          ) : (
+            <p className="text-[#6d5c4c] italic">No delivery address on this order.</p>
+          )}
+        </div>
+      )}
 
       {/* Items Table */}
       <div className="bg-white p-5 rounded border border-[#241a12]/10 space-y-3">
