@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Clock, AlertTriangle, Store } from "lucide-react";
-import { Order, updateOrderStatus, orderItemPackLabel } from "../lib/api";
+import { Order, updateOrderStatus, orderItemPackLabel, displayOrderNumber } from "../lib/api";
 import { toast } from "sonner";
 
 interface OrderDetailPageProps {
@@ -82,7 +82,7 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
           </Link>
           <div>
             <span className="text-[10px] font-mono text-[#8a4f27] uppercase">
-              Order #{order._id}
+              Order {displayOrderNumber(order)}
             </span>
             <h1 className="font-display italic text-2xl text-[#241a12]">Customer Order Breakdown</h1>
           </div>

@@ -33,6 +33,7 @@ import {
   getShiprocketLabel,
   trackOrderShipment,
   orderItemPackLabel,
+  displayOrderNumber,
 } from "../lib/api";
 import { toast } from "sonner";
 
@@ -101,6 +102,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
         const matchSearch =
           !search ||
           o._id.toLowerCase().includes(search.toLowerCase()) ||
+          (o.orderNumber && o.orderNumber.toLowerCase().includes(search.toLowerCase())) ||
           (o.guestEmail && o.guestEmail.toLowerCase().includes(search.toLowerCase())) ||
           (o.user?.email && o.user.email.toLowerCase().includes(search.toLowerCase())) ||
           (o.shiprocket?.awbCode && o.shiprocket.awbCode.toLowerCase().includes(search.toLowerCase()));
@@ -135,10 +137,10 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
   // from it: a COD parcel marked "Shipped" has not been paid for yet, and a
   // prepaid order moved back to "Processing" has not been un-paid. `isPaid` is
   // left out of the request entirely so the server leaves it untouched.
-  const handleStatusChange = async (id: string, newStatus: string) => {
-    const res = await updateOrderStatus(id, newStatus);
+  const handleStatusChange = async (order: Order, newStatus: string) => {
+    const res = await updateOrderStatus(order._id, newStatus);
     if (res.success) {
-      toast.success(`Order #${id.substring(0, 8)} → ${newStatus}`);
+      toast.success(`Order ${displayOrderNumber(order)} → ${newStatus}`);
       onRefresh();
     } else {
       toast.error(res.message || "Failed to update");
@@ -156,14 +158,14 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
       o.fulfillmentMethod === "pickup" ? "collected at the counter" : "collected on delivery";
     const ok = window.confirm(
       next
-        ? `Mark order #${o._id.substring(0, 8)} as PAID?\n\n${amount} — only confirm this once the money has actually been ${collectedWhere}.`
-        : `Mark order #${o._id.substring(0, 8)} as UNPAID?\n\nThis reverses the payment record for ${amount}.`
+        ? `Mark order ${displayOrderNumber(o)} as PAID?\n\n${amount} — only confirm this once the money has actually been ${collectedWhere}.`
+        : `Mark order ${displayOrderNumber(o)} as UNPAID?\n\nThis reverses the payment record for ${amount}.`
     );
     if (!ok) return;
 
     const res = await updateOrderStatus(o._id, o.status, next);
     if (res.success) {
-      toast.success(`Order #${o._id.substring(0, 8)} marked ${next ? "Paid" : "Unpaid"}`);
+      toast.success(`Order ${displayOrderNumber(o)} marked ${next ? "Paid" : "Unpaid"}`);
       onRefresh();
     } else {
       toast.error(res.message || "Failed to update payment status");
@@ -286,7 +288,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
             </div>
             <div style="text-align: right;">
               <h2 style="margin: 0; font-size: 16px;">PACKING SLIP</h2>
-              <p style="font-size: 12px; margin: 4px 0; font-family: monospace;">Order #${order._id}</p>
+              <p style="font-size: 12px; margin: 4px 0; font-family: monospace;">Order ${displayOrderNumber(order)}</p>
               <p style="font-size: 11px; color: #6d5c4c; margin: 0;">${new Date(order.createdAt).toLocaleDateString("en-IN")}</p>
             </div>
           </div>
@@ -400,7 +402,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
           <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6d5c4c]" />
           <input
             type="text"
-            placeholder="Search order ID, email, AWB code..."
+            placeholder="Search order number, email, AWB code..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-8 pr-3 py-1.5 text-xs bg-[#faf7f2] border border-[#241a12]/10 rounded-md outline-none focus:border-[#8a4f27] font-mono"
@@ -554,7 +556,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                           </button>
                         </td>
                         <td className="py-2.5 px-3 font-mono text-[#8a4f27] font-medium">
-                          <Link to={`/orders/${o._id}`} onClick={(e) => e.stopPropagation()} className="hover:underline">#{o._id.substring(0, 8)}</Link>
+                          <Link to={`/orders/${o._id}`} onClick={(e) => e.stopPropagation()} className="hover:underline">{displayOrderNumber(o)}</Link>
                         </td>
                         <td className="py-2.5 px-3 text-[#241a12] max-w-[150px]">
                           <div className="flex items-center gap-1.5">
@@ -612,7 +614,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                         <td onClick={(e) => e.stopPropagation()} className="py-2.5 px-3">
                           <select
                             value={o.status}
-                            onChange={(e) => handleStatusChange(o._id, e.target.value)}
+                            onChange={(e) => handleStatusChange(o, e.target.value)}
                             className={`px-2 py-0.5 text-[9px] font-mono uppercase rounded font-semibold border-0 outline-none cursor-pointer ${sc.bg} ${sc.text}`}
                           >
                             {ALL_STATUSES.map((s) => (
@@ -695,7 +697,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                       >
                         <div className="flex items-center justify-between">
                           <Link to={`/orders/${o._id}`} onClick={(e) => e.stopPropagation()} className="text-[10px] font-mono text-[#8a4f27] font-medium hover:underline">
-                            #{o._id.substring(0, 8)}
+                            {displayOrderNumber(o)}
                           </Link>
                           <span className={`px-1.5 py-0.5 text-[8px] font-mono rounded font-semibold ${o.isPaid ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"}`}>
                             {o.isPaid ? "Paid" : "Due"}
@@ -766,7 +768,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                 <div>
                   <h3 className="text-sm font-bold text-[#241a12]">Choose Courier Partner</h3>
                   <p className="text-[10px] font-mono text-[#6d5c4c]">
-                    Order #{courierPickerOrder._id.substring(0, 8)} → {courierPickerOrder.shippingAddress?.city || ""}{" "}
+                    Order {displayOrderNumber(courierPickerOrder)} → {courierPickerOrder.shippingAddress?.city || ""}{" "}
                     {courierPickerOrder.shippingAddress?.postalCode || ""}
                   </p>
                 </div>
@@ -957,7 +959,7 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                 </div>
                 <div>
                   <h3 className="text-sm font-bold text-[#241a12]">Live Courier Tracking</h3>
-                  <p className="text-[10px] font-mono text-[#6d5c4c]">Order #{trackingModalOrder._id.substring(0, 8)}</p>
+                  <p className="text-[10px] font-mono text-[#6d5c4c]">Order {displayOrderNumber(trackingModalOrder)}</p>
                 </div>
               </div>
               <button

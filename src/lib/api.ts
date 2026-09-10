@@ -95,6 +95,17 @@ export interface OrderItem {
   serving?: string;
 }
 
+/**
+ * The order number to show staff — `VSV-W-260910-007`.
+ *
+ * Falls back to the short Mongo id for orders placed before the scheme, and for
+ * a prepaid order that hasn't been paid for yet (it earns its number only when
+ * Razorpay captures, so no number is burned on an abandoned checkout).
+ */
+export function displayOrderNumber(order: { orderNumber?: string; _id: string }): string {
+  return order.orderNumber || `#${order._id.substring(0, 8)}`;
+}
+
 /** Pull the first weight/volume token ("250g", "1 kg", "400 ml") out of a string. */
 function extractWeightToken(text?: string): string | null {
   if (!text) return null;
@@ -148,6 +159,15 @@ export interface ShiprocketDetails {
 
 export interface Order {
   _id: string;
+  /**
+   * Master order ID — `VSV-W-260910-007`. Issued once the order is confirmed
+   * (immediately for COD/pickup, on payment capture for prepaid), and the same
+   * number Shiprocket and the customer's invoice quote. Absent on orders placed
+   * before the scheme, and on a prepaid order still awaiting payment.
+   */
+  orderNumber?: string;
+  /** Sales channel: W website, G gifting, S subscription, M marketplace, R wholesale. */
+  channel?: string;
   guestEmail?: string;
   user?: { name?: string; email?: string };
   orderItems: OrderItem[];

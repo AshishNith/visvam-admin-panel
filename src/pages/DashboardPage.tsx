@@ -33,7 +33,7 @@ import {
   Scatter,
   ZAxis,
 } from "recharts";
-import { Product, Order, ContactInquiry } from "../lib/api";
+import { Product, Order, ContactInquiry, displayOrderNumber } from "../lib/api";
 
 /* ── Date range helpers ─────────────────────────────────── */
 type DateRange = "7d" | "21d" | "30d" | "90d" | "all";
@@ -641,7 +641,7 @@ export default function DashboardPage({ products, orders, inquiries }: Dashboard
                       <tr key={o._id} className="hover:bg-[#faf7f2]/50 transition">
                         <td className="py-2.5 px-3 font-mono text-[#8a4f27] font-medium">
                           <Link to={`/orders/${o._id}`} className="hover:underline">
-                            #{o._id.substring(0, 8)}
+                            {displayOrderNumber(o)}
                           </Link>
                         </td>
                         <td className="py-2.5 px-3 text-[#241a12] truncate max-w-[150px]">
