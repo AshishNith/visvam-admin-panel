@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Clock, AlertTriangle, Store } from "lucide-react";
-import { Order, updateOrderStatus, orderItemPackLabel, displayOrderNumber } from "../lib/api";
+import { Order, updateOrderStatus, orderItemVariantBadges, displayOrderNumber } from "../lib/api";
 import { toast } from "sonner";
 
 interface OrderDetailPageProps {
@@ -209,7 +209,7 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
             </thead>
             <tbody className="divide-y divide-[#241a12]/5">
               {order.orderItems.map((item, idx) => {
-                const pack = orderItemPackLabel(item);
+                const badges = orderItemVariantBadges(item);
                 return (
                 <tr key={idx}>
                   <td className="p-2.5">
@@ -219,10 +219,17 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
                       )}
                       <div className="space-y-1">
                         <span className="font-medium text-[#241a12]">{item.name}</span>
-                        {pack ? (
-                          <span className="block w-fit px-2 py-0.5 rounded bg-[#8a4f27]/10 text-[#8a4f27] text-[11px] font-mono font-semibold uppercase tracking-wide">
-                            {pack}
-                          </span>
+                        {badges.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {badges.map((badge, bi) => (
+                              <span
+                                key={bi}
+                                className="block w-fit px-2 py-0.5 rounded bg-[#8a4f27]/10 text-[#8a4f27] text-[11px] font-mono font-semibold uppercase tracking-wide"
+                              >
+                                {badge}
+                              </span>
+                            ))}
+                          </div>
                         ) : (
                           <span className="block text-[10px] text-[#6d5c4c] italic">
                             pack size not recorded

@@ -114,33 +114,26 @@ function extractWeightToken(text?: string): string | null {
 }
 
 /**
- * The pack size (weight) for one order line — "250g", "500g", "1kg", …
- *
- * Only ever returns an actual weight: it reads the "Weight" option chosen at
- * checkout, then any weight token in the variant title or the product's serving
- * text. Returns null when the order captured no weight — an older order, or an
- * item re-ordered from history without its size — so the caller can say
- * "not recorded" instead of showing a non-size label like "Pack" or "Pouch".
+ * Every variant attribute chosen for one order line — "Medium", "500g" — not
+ * just the weight. Reads the raw `selectedOptions` the customer picked at
+ * checkout (Grade, Shape, Weight, …), falling back to the `·`-separated
+ * `variantTitle` ("Reserve Super Jumbo · 500g") for orders placed before
+ * `selectedOptions` was recorded.
  */
-export function orderItemPackLabel(item: OrderItem): string | null {
-  // 1. The size the customer actually picked at checkout.
+export function orderItemVariantBadges(item: OrderItem): string[] {
   if (item.selectedOptions) {
-    for (const [key, val] of Object.entries(item.selectedOptions)) {
-      if (val && val.trim() && /weight|size|gram|quantity/i.test(key)) return val.trim();
-    }
-    for (const val of Object.values(item.selectedOptions)) {
-      const w = extractWeightToken(val);
-      if (w) return w;
-    }
+    const values = Object.values(item.selectedOptions)
+      .map((v) => v?.trim())
+      .filter((v): v is string => Boolean(v));
+    if (values.length) return values;
   }
-  // 2. A weight in the variant title ("Reserve Super Jumbo · 500g", "250g").
-  const fromTitle = extractWeightToken(item.variantTitle);
-  if (fromTitle) return fromTitle;
-  if (item.variantTitle && /^\s*\d/.test(item.variantTitle)) return item.variantTitle.trim();
-  // 3. A weight in the serving text ("500g Box", "1kg Luxury Gift Box").
+  if (item.variantTitle) {
+    const parts = item.variantTitle.split("·").map((s) => s.trim()).filter(Boolean);
+    if (parts.length) return parts;
+  }
   const fromServing = extractWeightToken(item.serving);
-  if (fromServing) return fromServing;
-  return null;
+  if (fromServing) return [fromServing];
+  return [];
 }
 
 export interface ShiprocketDetails {

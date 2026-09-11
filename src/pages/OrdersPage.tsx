@@ -32,7 +32,7 @@ import {
   getShiprocketCouriers,
   getShiprocketLabel,
   trackOrderShipment,
-  orderItemPackLabel,
+  orderItemVariantBadges,
   displayOrderNumber,
 } from "../lib/api";
 import { toast } from "sonner";
@@ -250,11 +250,11 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
 
     const itemsRows = order.orderItems
       .map((i) => {
-        const pack = orderItemPackLabel(i);
+        const badges = orderItemVariantBadges(i);
         return `
       <tr>
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${i.name}${
-          pack ? ` <span style="color: #8a4f27; font-weight: bold;">— ${pack}</span>` : ""
+          badges.length ? ` <span style="color: #8a4f27; font-weight: bold;">— ${badges.join(" · ")}</span>` : ""
         }</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: center;">${i.qty}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">₹${i.price}</td>
