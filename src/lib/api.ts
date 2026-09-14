@@ -23,6 +23,18 @@ function getAuthHeaders(): Record<string, string> {
   return headers;
 }
 
+// A stale/expired/wrong-role token makes an authenticated GET 401 forever,
+// which every list fetcher below quietly turns into an empty array (so a
+// transient network hiccup doesn't nuke the UI). That made a bad token
+// indistinguishable from "there's genuinely nothing here" — the token stayed
+// in localStorage, the panel looked logged in, and every authenticated
+// section just showed empty with no error. Kicking back to the login screen
+// makes the real cause visible instead.
+function redirectToLogin() {
+  clearAdminToken();
+  if (typeof window !== "undefined") window.location.reload();
+}
+
 // Admin-uploaded images are stored as raw, full-resolution Cloudinary URLs
 // (frequently 8000px+ / ~10MB). Rendering those originals as small thumbnails
 // is what made these lists crawl. Request a small derivative instead.
@@ -435,6 +447,7 @@ export interface Coupon {
 export async function getCoupons(): Promise<Coupon[]> {
   try {
     const res = await fetch(`${API_BASE}/coupons`, { headers: getAuthHeaders() });
+    if (res.status === 401) { redirectToLogin(); return []; }
     if (!res.ok) throw new Error("Failed to fetch coupons");
     const json = await res.json();
     return json.data || [];
@@ -491,6 +504,7 @@ export async function deleteCoupon(id: string): Promise<{ success: boolean; mess
 export async function getOrders(): Promise<Order[]> {
   try {
     const res = await fetch(`${API_BASE}/orders`, { headers: getAuthHeaders() });
+    if (res.status === 401) { redirectToLogin(); return []; }
     if (!res.ok) throw new Error("Failed to fetch orders");
     const json = await res.json();
     return json.data || [];
@@ -517,6 +531,7 @@ export async function updateOrderStatus(id: string, status: string, isPaid?: boo
 export async function getInquiries(): Promise<ContactInquiry[]> {
   try {
     const res = await fetch(`${API_BASE}/contact`, { headers: getAuthHeaders() });
+    if (res.status === 401) { redirectToLogin(); return []; }
     if (!res.ok) throw new Error("Failed to fetch inquiries");
     const json = await res.json();
     return json.data || [];
@@ -555,6 +570,7 @@ export async function deleteInquiry(id: string): Promise<{ success: boolean; mes
 export async function getNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
   try {
     const res = await fetch(`${API_BASE}/newsletter`, { headers: getAuthHeaders() });
+    if (res.status === 401) { redirectToLogin(); return []; }
     if (!res.ok) throw new Error("Failed to fetch newsletter");
     const json = await res.json();
     return json.data || [];
@@ -758,6 +774,7 @@ export interface RegisteredUser {
 export async function getUsers(): Promise<RegisteredUser[]> {
   try {
     const res = await fetch(`${API_BASE}/users`, { headers: getAuthHeaders() });
+    if (res.status === 401) { redirectToLogin(); return []; }
     if (!res.ok) throw new Error("Failed to fetch users");
     const json = await res.json();
     return json.data || [];
