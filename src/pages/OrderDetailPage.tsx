@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Clock, AlertTriangle, Store } from "lucide-react";
-import { Order, updateOrderStatus, orderItemVariantBadges, displayOrderNumber } from "../lib/api";
+import {
+  Order,
+  updateOrderStatus,
+  orderItemVariantBadges,
+  displayOrderNumber,
+  awaitsRazorpayConfirmation,
+  reconcileRazorpayPayment,
+} from "../lib/api";
 import { toast } from "sonner";
 
 interface OrderDetailPageProps {
@@ -13,6 +20,7 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [order, setOrder] = useState<Order | null>(null);
+  const [checkingPayment, setCheckingPayment] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -68,6 +76,22 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
     } else {
       toast.error(res.message || "Failed to update payment status");
     }
+  };
+
+  // For an online order stuck on "Unpaid": ask Razorpay directly. If it holds a
+  // captured payment, the server records it and issues the VSV number.
+  const handleCheckRazorpay = async () => {
+    setCheckingPayment(true);
+    const res = await reconcileRazorpayPayment(order._id);
+    setCheckingPayment(false);
+    if (!res.success) {
+      toast.error(res.message || "Could not check payment with Razorpay");
+      return;
+    }
+    if (res.data) setOrder(res.data);
+    if (res.paid) toast.success(res.message || "Payment found and recorded");
+    else toast.warning(res.message || "No captured payment found on Razorpay");
+    onRefresh();
   };
 
   return (
@@ -276,14 +300,26 @@ export default function OrderDetailPage({ orders, onRefresh }: OrderDetailPagePr
 
       {/* Payment Toggle */}
       <div className="flex justify-between items-center pt-2">
-        <button
-          onClick={handlePaymentToggle}
-          className={`px-4 py-2 text-xs font-mono uppercase rounded transition font-semibold ${
-            order.isPaid ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
-          }`}
-        >
-          {order.isPaid ? "Payment Verified (Paid ✓)" : "Payment Pending (Click to Mark Paid)"}
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={handlePaymentToggle}
+            className={`px-4 py-2 text-xs font-mono uppercase rounded transition font-semibold ${
+              order.isPaid ? "bg-emerald-100 text-emerald-800" : "bg-amber-100 text-amber-800"
+            }`}
+          >
+            {order.isPaid ? "Payment Verified (Paid ✓)" : "Payment Pending (Click to Mark Paid)"}
+          </button>
+
+          {awaitsRazorpayConfirmation(order) && (
+            <button
+              onClick={handleCheckRazorpay}
+              disabled={checkingPayment}
+              className="px-4 py-2 text-xs font-mono uppercase rounded transition font-semibold bg-white border border-[#241a12]/20 text-[#241a12] hover:bg-[#eadecc] disabled:opacity-50"
+            >
+              {checkingPayment ? "Checking Razorpay..." : "Check Payment with Razorpay"}
+            </button>
+          )}
+        </div>
 
         <Link
           to="/orders"

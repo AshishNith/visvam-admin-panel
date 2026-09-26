@@ -34,6 +34,8 @@ import {
   trackOrderShipment,
   orderItemVariantBadges,
   displayOrderNumber,
+  awaitsRazorpayConfirmation,
+  reconcileRazorpayPayment,
 } from "../lib/api";
 import { toast } from "sonner";
 
@@ -170,6 +172,23 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
     } else {
       toast.error(res.message || "Failed to update payment status");
     }
+  };
+
+  /* ── Razorpay payment check ────────────────────────── */
+  // For an online order stuck on "Unpaid": ask Razorpay directly. If it holds a
+  // captured payment, the server records it and issues the VSV number.
+  const [checkingPaymentId, setCheckingPaymentId] = useState<string | null>(null);
+  const handleCheckRazorpay = async (o: Order) => {
+    setCheckingPaymentId(o._id);
+    const res = await reconcileRazorpayPayment(o._id);
+    setCheckingPaymentId(null);
+    if (!res.success) {
+      toast.error(res.message || "Could not check payment with Razorpay");
+      return;
+    }
+    if (res.paid) toast.success(res.message || "Payment found and recorded");
+    else toast.warning(res.message || "No captured payment found on Razorpay");
+    onRefresh();
   };
 
   /* ── Shiprocket Push / Dispatch ─────────────────────── */
@@ -632,6 +651,16 @@ export default function OrdersPage({ orders, onRefresh }: OrdersPageProps) {
                           >
                             {o.isPaid ? "Paid ✓" : "Unpaid"}
                           </button>
+                          {awaitsRazorpayConfirmation(o) && (
+                            <button
+                              onClick={() => handleCheckRazorpay(o)}
+                              disabled={checkingPaymentId === o._id}
+                              title="Ask Razorpay whether this order was paid, and record it if so"
+                              className="block mt-1 text-[9px] font-mono text-[#8a4f27] hover:underline disabled:opacity-50"
+                            >
+                              {checkingPaymentId === o._id ? "Checking..." : "Check Razorpay"}
+                            </button>
+                          )}
                         </td>
 
                         {/* Actions */}

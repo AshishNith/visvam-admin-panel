@@ -191,6 +191,7 @@ export interface Order {
     country?: string;
   };
   paymentMethod: string;
+  paymentResult?: { razorpayOrderId?: string; razorpayPaymentId?: string };
   itemsPrice: number;
   /** Coupon code applied at checkout (uppercased), if any. */
   couponCode?: string;
@@ -521,6 +522,38 @@ export async function updateOrderStatus(id: string, status: string, isPaid?: boo
       headers: getAuthHeaders(),
       body: JSON.stringify({ status, isPaid }),
     });
+    return await res.json();
+  } catch (err: any) {
+    return { success: false, message: err.message };
+  }
+}
+
+/**
+ * An online order that went to Razorpay but isn't recorded as paid. These are
+ * the ones worth checking with Razorpay: the customer may have paid and never
+ * come back to the site, so the payment never reached us.
+ */
+export function awaitsRazorpayConfirmation(order: Order): boolean {
+  return (
+    !order.isPaid &&
+    (/razorpay/i.test(order.paymentMethod || "") || Boolean(order.paymentResult?.razorpayOrderId))
+  );
+}
+
+/**
+ * Asks Razorpay whether this order was actually paid. If a captured payment is
+ * found, the server records it exactly as a normal checkout would (paid, VSV
+ * order number, confirmation email, Shiprocket). `paid` says which way it went.
+ */
+export async function reconcileRazorpayPayment(
+  id: string
+): Promise<{ success: boolean; paid?: boolean; message?: string; data?: Order }> {
+  try {
+    const res = await fetch(`${API_BASE}/payments/razorpay/reconcile/${id}`, {
+      method: "POST",
+      headers: getAuthHeaders(),
+    });
+    if (res.status === 401) { redirectToLogin(); return { success: false, message: "Session expired" }; }
     return await res.json();
   } catch (err: any) {
     return { success: false, message: err.message };
