@@ -171,7 +171,7 @@ function SalesReport({ orders, products, range, allOrders }: { orders: Order[]; 
     }
     const catLabels: Record<string, string> = {
       nuts: "Nuts & Dried Fruits",
-      gourmet: "Gourmet Selection",
+      gourmet: "Kitchen Selection",
       gifting: "Gifting & Hampers",
     };
     return Object.entries(map)

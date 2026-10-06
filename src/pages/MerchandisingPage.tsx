@@ -29,8 +29,8 @@ const SLOTS: SlotConfig[] = [
   },
   {
     key: "nav-gourmet",
-    label: "Navbar Dropdown — Gourmet",
-    description: "Shown when a shopper hovers \"Gourmet\" in the site header.",
+    label: "Navbar Dropdown — Kitchen",
+    description: "Shown when a shopper hovers \"Kitchen\" in the site header.",
     max: 2,
   },
   {

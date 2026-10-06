@@ -66,7 +66,7 @@ export default function ProductsPage({ products, onRefresh }: ProductsPageProps)
           >
             <option value="all">All Categories</option>
             <option value="nuts">Nuts & Dried Fruits</option>
-            <option value="gourmet">Gourmet</option>
+            <option value="gourmet">Kitchen</option>
             <option value="gifting">Gifting</option>
           </select>
         </div>
