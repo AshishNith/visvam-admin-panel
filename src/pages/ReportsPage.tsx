@@ -36,7 +36,7 @@ const RANGE_LABELS: Record<DateRange, string> = { "7d": "7 Days", "21d": "21 Day
 
 const CATEGORY_COLORS: Record<string, string> = {
   nuts: "#8a4f27",
-  gourmet: "#d97706",
+  kitchen: "#d97706",
   gifting: "#7c3aed",
 };
 
@@ -171,7 +171,7 @@ function SalesReport({ orders, products, range, allOrders }: { orders: Order[]; 
     }
     const catLabels: Record<string, string> = {
       nuts: "Nuts & Dried Fruits",
-      gourmet: "Kitchen Selection",
+      kitchen: "Kitchen Selection",
       gifting: "Gifting & Hampers",
     };
     return Object.entries(map)

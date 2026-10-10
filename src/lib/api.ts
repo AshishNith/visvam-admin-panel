@@ -75,7 +75,7 @@ export interface Product {
   name: string;
   tagline: string;
   price: number;
-  category: "gourmet" | "nuts" | "gifting";
+  category: "kitchen" | "nuts" | "gifting";
   badge?: string;
   images: string[];
   description: string;
