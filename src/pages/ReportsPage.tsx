@@ -26,6 +26,7 @@ import {
   Cell,
 } from "recharts";
 import { Product, Order } from "../lib/api";
+import ExportReportDialog from "../components/ExportReportDialog";
 
 /* ── Types ──────────────────────────────────────────────── */
 type ReportTab = "sales" | "customers" | "inventory" | "tax";
@@ -61,6 +62,7 @@ interface ReportsPageProps {
 export default function ReportsPage({ products, orders }: ReportsPageProps) {
   const [tab, setTab] = useState<ReportTab>("sales");
   const [range, setRange] = useState<DateRange>("30d");
+  const [exportOpen, setExportOpen] = useState(false);
 
   const cutoff = new Date(Date.now() - RANGE_DAYS[range] * 86400000);
   const filtered = useMemo(() => orders.filter((o) => new Date(o.createdAt) >= cutoff), [orders, range]);
@@ -80,20 +82,30 @@ export default function ReportsPage({ products, orders }: ReportsPageProps) {
           <h1 className="font-display font-bold text-2xl">Reports</h1>
           <p className="text-xs text-muted-foreground mt-0.5">Comprehensive business analytics</p>
         </div>
-        <div className="flex bg-white rounded-lg border border-[#241a12]/10 p-0.5 shadow-2xs">
-          {(["7d", "21d", "30d", "90d", "all"] as DateRange[]).map((r) => (
-            <button
-              key={r}
-              onClick={() => setRange(r)}
-              className={`px-3 py-1.5 text-[11px] font-semibold rounded-md transition-all ${
-                range === r ? "bg-[#3a2012] text-white shadow-sm" : "text-[#6d5c4c] hover:bg-[#f4ece1]"
-              }`}
-            >
-              {r === "all" ? "All" : r.toUpperCase()}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 flex-wrap">
+          <div className="flex bg-white rounded-lg border border-[#241a12]/10 p-0.5 shadow-2xs">
+            {(["7d", "21d", "30d", "90d", "all"] as DateRange[]).map((r) => (
+              <button
+                key={r}
+                onClick={() => setRange(r)}
+                className={`px-3 py-1.5 text-[11px] font-semibold rounded-md transition-all ${
+                  range === r ? "bg-[#3a2012] text-white shadow-sm" : "text-[#6d5c4c] hover:bg-[#f4ece1]"
+                }`}
+              >
+                {r === "all" ? "All" : r.toUpperCase()}
+              </button>
+            ))}
+          </div>
+          <button
+            onClick={() => setExportOpen(true)}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#3a2012] text-white text-[11px] font-semibold shadow-sm hover:bg-[#241a12]"
+          >
+            <Download size={13} /> Export report
+          </button>
         </div>
       </div>
+
+      {exportOpen && <ExportReportDialog orders={orders} onClose={() => setExportOpen(false)} />}
 
       {/* Tab Navigation */}
       <div className="flex gap-1 bg-white rounded-lg border border-[#241a12]/10 p-1 shadow-2xs">
